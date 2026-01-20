@@ -3,6 +3,7 @@ export interface Profile {
   id: string;
   full_name: string | null;
   currency: string;
+  language: string | null;
   created_at: string;
   updated_at: string;
 }

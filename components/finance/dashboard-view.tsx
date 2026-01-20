@@ -26,21 +26,22 @@ import {
   Tooltip,
 } from "recharts";
 
+// Dados mockados para exemplo
 const monthlyNetWorthData = [
-  { month: "Aug", netWorth: 145000 },
-  { month: "Sep", netWorth: 152000 },
-  { month: "Oct", netWorth: 148000 },
+  { month: "Ago", netWorth: 145000 },
+  { month: "Set", netWorth: 152000 },
+  { month: "Out", netWorth: 148000 },
   { month: "Nov", netWorth: 158000 },
-  { month: "Dec", netWorth: 165000 },
+  { month: "Dez", netWorth: 165000 },
   { month: "Jan", netWorth: 178500 },
 ];
 
 const cashFlowData = [
-  { month: "Aug", income: 11500, expenses: 5200 },
-  { month: "Sep", income: 12000, expenses: 5800 },
-  { month: "Oct", income: 11800, expenses: 6100 },
+  { month: "Ago", income: 11500, expenses: 5200 },
+  { month: "Set", income: 12000, expenses: 5800 },
+  { month: "Out", income: 11800, expenses: 6100 },
   { month: "Nov", income: 13500, expenses: 5500 },
-  { month: "Dec", income: 14200, expenses: 7800 },
+  { month: "Dez", income: 14200, expenses: 7800 },
   { month: "Jan", income: 12300, expenses: 5400 },
 ];
 
@@ -51,11 +52,11 @@ export function DashboardView() {
   const isLoading = summaryLoading || cardsLoading;
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat("pt-BR", {
       style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
 
   if (isLoading) {
@@ -76,10 +77,10 @@ export function DashboardView() {
   const savingsRate = summary?.savingsRate?.toFixed(1) || "0";
 
   const expenseBreakdown = [
-    { name: "Fixed", value: monthlyExpenses * 0.6, color: "#3b82f6" },
-    { name: "Credit Cards", value: creditCardDebt, color: "#10b981" },
-    { name: "Extra", value: monthlyExpenses * 0.2, color: "#f59e0b" },
-    { name: "Other", value: monthlyExpenses * 0.2, color: "#8b5cf6" },
+    { name: "Fixas", value: monthlyExpenses * 0.6, color: "#3b82f6" },
+    { name: "Cartões", value: creditCardDebt, color: "#10b981" },
+    { name: "Extras", value: monthlyExpenses * 0.2, color: "#f59e0b" },
+    { name: "Outros", value: monthlyExpenses * 0.2, color: "#8b5cf6" },
   ].filter(item => item.value > 0);
 
   // Get recent purchases from cards
@@ -96,46 +97,46 @@ export function DashboardView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Visão Geral</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Your financial overview at a glance
+          Resumo completo da sua saúde financeira
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatCard
-          title="Net Worth"
+          title="Patrimônio"
           value={formatCurrency(netWorth)}
           icon={DollarSign}
           trend={{ value: 8.2, isPositive: netWorth >= 0 }}
         />
         <StatCard
-          title="Monthly Income"
+          title="Renda Mensal"
           value={formatCurrency(monthlyIncome)}
           icon={Wallet}
           trend={{ value: 3.5, isPositive: true }}
         />
         <StatCard
-          title="Monthly Expenses"
+          title="Despesas Mensais"
           value={formatCurrency(monthlyExpenses)}
           icon={TrendingDown}
           trend={{ value: -2.1, isPositive: true }}
         />
         <StatCard
-          title="Cash Flow"
+          title="Fluxo de Caixa"
           value={formatCurrency(monthlyCashFlow)}
-          subtitle={`${savingsRate}% savings rate`}
+          subtitle={`${savingsRate}% taxa de poupança`}
           icon={TrendingUp}
         />
         <StatCard
-          title="Investments"
+          title="Investimentos"
           value={formatCurrency(investmentValue)}
-          subtitle={`${investmentGain > 0 ? "+" : ""}${formatCurrency(investmentGain)} gain`}
+          subtitle={`${investmentGain > 0 ? "+" : ""}${formatCurrency(investmentGain)} retorno`}
           icon={PiggyBank}
           trend={{ value: 15.4, isPositive: investmentGain >= 0 }}
         />
         <StatCard
-          title="Credit Card Debt"
+          title="Faturas Cartão"
           value={formatCurrency(creditCardDebt)}
           icon={CreditCard}
           trend={{ value: -5.2, isPositive: true }}
@@ -145,7 +146,7 @@ export function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl bg-card border border-border p-5">
           <h3 className="font-medium text-card-foreground mb-4">
-            Net Worth Trend
+            Evolução Patrimonial
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -185,7 +186,7 @@ export function DashboardView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -194,7 +195,7 @@ export function DashboardView() {
                     borderRadius: "8px",
                     color: "oklch(0.98 0 0)",
                   }}
-                  formatter={(value: number) => [formatCurrency(value), "Net Worth"]}
+                  formatter={(value: number) => [formatCurrency(value), "Patrimônio"]}
                 />
                 <Area
                   type="monotone"
@@ -210,7 +211,7 @@ export function DashboardView() {
 
         <div className="rounded-xl bg-card border border-border p-5">
           <h3 className="font-medium text-card-foreground mb-4">
-            Monthly Cash Flow
+            Fluxo de Caixa Mensal
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -230,7 +231,7 @@ export function DashboardView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -243,13 +244,13 @@ export function DashboardView() {
                 />
                 <Bar
                   dataKey="income"
-                  name="Income"
+                  name="Receita"
                   fill="oklch(0.72 0.19 160)"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
                   dataKey="expenses"
-                  name="Expenses"
+                  name="Despesas"
                   fill="oklch(0.65 0.18 250)"
                   radius={[4, 4, 0, 0]}
                 />
@@ -262,13 +263,13 @@ export function DashboardView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="rounded-xl bg-card border border-border p-5">
           <h3 className="font-medium text-card-foreground mb-4">
-            Expense Breakdown
+            Detalhamento de Despesas
           </h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={expenseBreakdown.length > 0 ? expenseBreakdown : [{ name: "No Data", value: 1, color: "#374151" }]}
+                  data={expenseBreakdown.length > 0 ? expenseBreakdown : [{ name: "Sem Dados", value: 1, color: "#374151" }]}
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
@@ -276,7 +277,7 @@ export function DashboardView() {
                   paddingAngle={2}
                   dataKey="value"
                 >
-                  {(expenseBreakdown.length > 0 ? expenseBreakdown : [{ name: "No Data", value: 1, color: "#374151" }]).map((entry, index) => (
+                  {(expenseBreakdown.length > 0 ? expenseBreakdown : [{ name: "Sem Dados", value: 1, color: "#374151" }]).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -307,13 +308,13 @@ export function DashboardView() {
 
         <div className="lg:col-span-2 rounded-xl bg-card border border-border p-5">
           <h3 className="font-medium text-card-foreground mb-4">
-            Recent Activity
+            Atividade Recente
           </h3>
           {recentPurchases.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
               <CreditCard className="h-12 w-12 mb-3 opacity-50" />
-              <p className="text-sm">No recent transactions</p>
-              <p className="text-xs mt-1">Add a credit card and purchases to see activity</p>
+              <p className="text-sm">Nenhuma transação recente</p>
+              <p className="text-xs mt-1">Adicione cartões e compras para ver atividades</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -332,6 +333,11 @@ export function DashboardView() {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {purchase.cardName} - {purchase.category}
+                        {purchase.is_installment && purchase.total_installments && (
+                          <span className="ml-2 text-orange-500">
+                            ({purchase.total_installments}x)
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -339,10 +345,15 @@ export function DashboardView() {
                     <p className="text-sm font-medium text-foreground">
                       -{formatCurrency(Number(purchase.amount))}
                     </p>
+                     {purchase.is_installment && purchase.total_installments && (
+                        <p className="text-[10px] text-muted-foreground">
+                          (Parcela: {formatCurrency(Number(purchase.amount) / purchase.total_installments)})
+                        </p>
+                     )}
                     <p className="text-xs text-muted-foreground">
-                      {new Date(purchase.purchase_date).toLocaleDateString("en-US", {
+                      {new Date(purchase.purchase_date).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
                         month: "short",
-                        day: "numeric",
                       })}
                     </p>
                   </div>

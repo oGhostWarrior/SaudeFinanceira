@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useInvestments } from "@/hooks/use-finance-data";
-import { createInvestment, deleteInvestment, updateInvestment } from "@/lib/actions/finance-actions";
+import { createInvestment, deleteInvestment, updateInvestment, updateCryptoPrices } from "@/lib/actions/finance-actions";
 import type { Investment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ import {
   Filter,
   Loader2,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import {
   XAxis,
@@ -167,7 +169,7 @@ function AddInvestmentDialog({ onSuccess }: { onSuccess: () => void }) {
 export function InvestmentsView() {
   const [filter, setFilter] = useState<string>("all");
   const { data: investments, isLoading } = useInvestments();
-
+  const [isUpdating, setIsUpdating] = useState(false);
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -181,6 +183,23 @@ export function InvestmentsView() {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  const handleUpdatePrices = async () => {
+    setIsUpdating(true);
+    try {
+      await updateCryptoPrices();
+      await mutate("investments");
+      await mutate("financial-summary");
+      toast.success("Cotações atualizadas com sucesso!");
+    } catch (error) {
+      toast.error("Erro ao atualizar cotações.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  if (isLoading) {
   }
 
   const investmentsList = investments || [];
@@ -410,6 +429,19 @@ export function InvestmentsView() {
             </select>
           </div>
         </div>
+        <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleUpdatePrices} 
+              disabled={isUpdating}
+              className="gap-2"
+            >
+              <RefreshCw className={cn("h-4 w-4", isUpdating && "animate-spin")} />
+              {isUpdating ? "Atualizando..." : "Atualizar Cotações"}
+            </Button>
+
+            <AddInvestmentDialog onSuccess={() => {}} />
+          </div>
 
         {filteredInvestments.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">

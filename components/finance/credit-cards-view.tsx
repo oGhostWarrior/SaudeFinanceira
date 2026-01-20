@@ -10,10 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   CreditCard as CreditCardIcon,
   Plus,
-  ChevronRight,
   Calendar,
   ShoppingBag,
   Utensils,
@@ -47,16 +47,19 @@ const cardColors = [
 function CreditCardComponent({ card }: { card: CreditCard }) {
   const utilizationPercent = (Number(card.current_balance) / Number(card.credit_limit)) * 100;
   const availableCredit = Number(card.credit_limit) - Number(card.current_balance);
-  
+  const monthlyInvoice = (card.purchases || []).reduce((acc, p) => {
+    if (p.is_installment && p.total_installments && p.total_installments > 0) {
+      return acc + (Number(p.amount) / p.total_installments);
+    }
+    return acc + Number(p.amount);
+  }, 0);
+
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat("pt-BR", {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
       minimumFractionDigits: 2,
     }).format(value);
-
-  const dueDate = new Date();
-  dueDate.setDate(card.due_date);
 
   return (
     <div className={cn(
@@ -79,23 +82,23 @@ function CreditCardComponent({ card }: { card: CreditCard }) {
         
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-white/70">Balance</span>
-            <span className="text-white font-semibold">{formatCurrency(Number(card.current_balance))}</span>
+            <span className="text-white/70">Fatura Atual</span>
+            <span className="text-white font-semibold">{formatCurrency(monthlyInvoice)}</span>
           </div>
           <Progress 
             value={utilizationPercent} 
             className="h-1.5 bg-white/20"
           />
           <div className="flex justify-between text-xs">
-            <span className="text-white/60">Available: {formatCurrency(availableCredit)}</span>
-            <span className="text-white/60">Limit: {formatCurrency(Number(card.credit_limit))}</span>
+            <span className="text-white/60">Disponível: {formatCurrency(availableCredit)}</span>
+            <span className="text-white/60">Limite: {formatCurrency(Number(card.credit_limit))}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/10">
           <Calendar className="h-4 w-4 text-white/60" />
           <span className="text-xs text-white/60">
-            Due day: {card.due_date}
+            Vencimento dia: {card.due_date}
           </span>
         </div>
       </div>
@@ -144,56 +147,56 @@ function AddCardDialog({ onSuccess }: { onSuccess: () => void }) {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Card
+          Novo Cartão
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Add Credit Card</DialogTitle>
+          <DialogTitle className="text-foreground">Adicionar Cartão de Crédito</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Card Name</Label>
-            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="My Visa Card" required className="bg-input border-border" />
+            <Label htmlFor="name">Nome do Cartão</Label>
+            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Nubank, Visa..." required className="bg-input border-border" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="digits">Last 4 Digits</Label>
+            <Label htmlFor="digits">Últimos 4 Dígitos</Label>
             <Input id="digits" value={form.last_four_digits} onChange={(e) => setForm({ ...form, last_four_digits: e.target.value.slice(0, 4) })} placeholder="1234" maxLength={4} required className="bg-input border-border" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="limit">Credit Limit</Label>
+              <Label htmlFor="limit">Limite de Crédito</Label>
               <Input id="limit" type="number" value={form.credit_limit} onChange={(e) => setForm({ ...form, credit_limit: e.target.value })} placeholder="5000" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="balance">Current Balance</Label>
+              <Label htmlFor="balance">Fatura Atual (Inicial)</Label>
               <Input id="balance" type="number" value={form.current_balance} onChange={(e) => setForm({ ...form, current_balance: e.target.value })} placeholder="0" className="bg-input border-border" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="due">Due Day</Label>
+              <Label htmlFor="due">Dia do Vencimento</Label>
               <Input id="due" type="number" min="1" max="31" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label>Card Color</Label>
+              <Label>Cor do Cartão</Label>
               <Select value={form.color} onValueChange={(value) => setForm({ ...form, color: value })}>
                 <SelectTrigger className="bg-input border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="from-blue-600 to-blue-800">Blue</SelectItem>
-                  <SelectItem value="from-emerald-600 to-emerald-800">Green</SelectItem>
-                  <SelectItem value="from-purple-600 to-purple-800">Purple</SelectItem>
-                  <SelectItem value="from-orange-600 to-orange-800">Orange</SelectItem>
-                  <SelectItem value="from-pink-600 to-pink-800">Pink</SelectItem>
+                  <SelectItem value="from-blue-600 to-blue-800">Azul</SelectItem>
+                  <SelectItem value="from-emerald-600 to-emerald-800">Verde</SelectItem>
+                  <SelectItem value="from-purple-600 to-purple-800">Roxo</SelectItem>
+                  <SelectItem value="from-orange-600 to-orange-800">Laranja</SelectItem>
+                  <SelectItem value="from-pink-600 to-pink-800">Rosa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Add Card
+            Salvar Cartão
           </Button>
         </form>
       </DialogContent>
@@ -204,6 +207,8 @@ function AddCardDialog({ onSuccess }: { onSuccess: () => void }) {
 function AddPurchaseDialog({ cardId, onSuccess }: { cardId: string; onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isInstallment, setIsInstallment] = useState(false);
+  const [installments, setInstallments] = useState("2");
   const [form, setForm] = useState({
     description: "",
     amount: "",
@@ -221,14 +226,16 @@ function AddPurchaseDialog({ cardId, onSuccess }: { cardId: string; onSuccess: (
         amount: Number.parseFloat(form.amount),
         category: form.category,
         purchase_date: form.date,
-        is_installment: false,
-        current_installment: null,
-        total_installments: null,
+        is_installment: isInstallment,
+        current_installment: isInstallment ? 1 : null,
+        total_installments: isInstallment ? Number(installments) : null,
       });
       await mutate("credit-cards");
       await mutate("financial-summary");
       setOpen(false);
       setForm({ description: "", amount: "", category: "Shopping", date: new Date().toISOString().split("T")[0] });
+      setIsInstallment(false);
+      setInstallments("2");
       onSuccess();
     } catch {
       // Error handled silently
@@ -242,48 +249,74 @@ function AddPurchaseDialog({ cardId, onSuccess }: { cardId: string; onSuccess: (
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2 bg-transparent">
           <Plus className="h-4 w-4" />
-          Add Purchase
+          Adicionar Compra
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Add Purchase</DialogTitle>
+          <DialogTitle className="text-foreground">Nova Compra</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="desc">Description</Label>
-            <Input id="desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Amazon Purchase" required className="bg-input border-border" />
+            <Label htmlFor="desc">Descrição</Label>
+            <Input id="desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Ex: Supermercado" required className="bg-input border-border" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">Valor Total</Label>
               <Input id="amount" type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="50.00" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">Data</Label>
               <Input id="date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-input border-border" />
             </div>
           </div>
+          
+          <div className="flex items-center justify-between py-2">
+            <Label htmlFor="installment-mode" className="text-sm font-medium">Compra Parcelada?</Label>
+            <Switch
+              id="installment-mode"
+              checked={isInstallment}
+              onCheckedChange={setIsInstallment}
+            />
+          </div>
+
+          {isInstallment && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+              <Label htmlFor="installments">Número de Parcelas</Label>
+              <Input
+                id="installments"
+                type="number"
+                min="2"
+                max="48"
+                value={installments}
+                onChange={(e) => setInstallments(e.target.value)}
+                required={isInstallment}
+                className="bg-input border-border"
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>Categoria</Label>
             <Select value={form.category} onValueChange={(value) => setForm({ ...form, category: value })}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Shopping">Shopping</SelectItem>
-                <SelectItem value="Groceries">Groceries</SelectItem>
-                <SelectItem value="Entertainment">Entertainment</SelectItem>
-                <SelectItem value="Transportation">Transportation</SelectItem>
-                <SelectItem value="Travel">Travel</SelectItem>
-                <SelectItem value="Dining">Dining</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="Shopping">Compras</SelectItem>
+                <SelectItem value="Groceries">Mercado</SelectItem>
+                <SelectItem value="Entertainment">Lazer</SelectItem>
+                <SelectItem value="Transportation">Transporte</SelectItem>
+                <SelectItem value="Travel">Viagem</SelectItem>
+                <SelectItem value="Dining">Alimentação</SelectItem>
+                <SelectItem value="Other">Outros</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Add Purchase
+            Salvar Compra
           </Button>
         </form>
       </DialogContent>
@@ -296,9 +329,9 @@ export function CreditCardsView() {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat("pt-BR", {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
       minimumFractionDigits: 2,
     }).format(value);
 
@@ -313,11 +346,24 @@ export function CreditCardsView() {
   const cardsList = cards || [];
   const selectedCard = cardsList.find((c) => c.id === selectedCardId) || cardsList[0];
 
+  // Cálculos Gerais (View Principal)
   const totalBalance = cardsList.reduce((sum, card) => sum + Number(card.current_balance), 0);
   const totalLimit = cardsList.reduce((sum, card) => sum + Number(card.credit_limit), 0);
+  
+  // Calcular Fatura Mensal Total
+  const totalMonthlyInvoice = cardsList.reduce((sum, card) => {
+    return sum + (card.purchases || []).reduce((acc, p) => {
+      if (p.is_installment && p.total_installments && p.total_installments > 0) {
+        return acc + (Number(p.amount) / p.total_installments);
+      }
+      return acc + Number(p.amount);
+    }, 0);
+  }, 0);
+
   const overallUtilization = totalLimit > 0 ? (totalBalance / totalLimit) * 100 : 0;
 
   const handleDeleteCard = async (id: string) => {
+    if(!confirm("Tem certeza que deseja excluir este cartão?")) return;
     await deleteCreditCard(id);
     await mutate("credit-cards");
     await mutate("financial-summary");
@@ -325,6 +371,7 @@ export function CreditCardsView() {
   };
 
   const handleDeletePurchase = async (id: string) => {
+    if(!confirm("Excluir esta compra?")) return;
     await deleteCardPurchase(id);
     await mutate("credit-cards");
     await mutate("financial-summary");
@@ -334,9 +381,9 @@ export function CreditCardsView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Credit Cards</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Cartões de Crédito</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage your credit cards and track spending
+            Gerencie seus cartões e acompanhe seus gastos
           </p>
         </div>
         <AddCardDialog onSuccess={() => {}} />
@@ -344,25 +391,27 @@ export function CreditCardsView() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-xl bg-card border border-border p-5">
-          <p className="text-sm text-muted-foreground">Total Balance</p>
+          {/* Mostra Fatura MENSAL */}
+          <p className="text-sm text-muted-foreground">Fatura Total (Mês)</p>
           <p className="text-2xl font-semibold text-foreground mt-1">
-            {formatCurrency(totalBalance)}
+            {formatCurrency(totalMonthlyInvoice)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Across {cardsList.length} card{cardsList.length !== 1 ? "s" : ""}
+            Em {cardsList.length} cartão{cardsList.length !== 1 ? "s" : ""}
           </p>
         </div>
         <div className="rounded-xl bg-card border border-border p-5">
-          <p className="text-sm text-muted-foreground">Total Credit Limit</p>
+          {/* Mostra Limite TOTAL */}
+          <p className="text-sm text-muted-foreground">Limite Total</p>
           <p className="text-2xl font-semibold text-foreground mt-1">
             {formatCurrency(totalLimit)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {formatCurrency(totalLimit - totalBalance)} available
+            {formatCurrency(totalLimit - totalBalance)} disponível
           </p>
         </div>
         <div className="rounded-xl bg-card border border-border p-5">
-          <p className="text-sm text-muted-foreground">Credit Utilization</p>
+          <p className="text-sm text-muted-foreground">Utilização de Crédito</p>
           <p className="text-2xl font-semibold text-foreground mt-1">
             {overallUtilization.toFixed(1)}%
           </p>
@@ -373,14 +422,14 @@ export function CreditCardsView() {
       {cardsList.length === 0 ? (
         <div className="rounded-xl bg-card border border-border p-12 text-center">
           <CreditCardIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No credit cards yet</h3>
-          <p className="text-muted-foreground text-sm mb-4">Add your first credit card to start tracking spending</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">Nenhum cartão ainda</h3>
+          <p className="text-muted-foreground text-sm mb-4">Adicione seu primeiro cartão para começar a controlar.</p>
           <AddCardDialog onSuccess={() => {}} />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
-            <h3 className="font-medium text-foreground">Your Cards</h3>
+            <h3 className="font-medium text-foreground">Seus Cartões</h3>
             {cardsList.map((card) => (
               <div key={card.id} className="relative group">
                 <button
@@ -388,7 +437,7 @@ export function CreditCardsView() {
                   className={cn(
                     "w-full text-left transition-all",
                     selectedCard?.id === card.id 
-                      ? "ring-2 ring-primary rounded-2xl"
+                      ? "ring-2 ring-primary rounded-2xl scale-[1.02]"
                       : "opacity-75 hover:opacity-100"
                   )}
                 >
@@ -397,6 +446,7 @@ export function CreditCardsView() {
                 <button
                   onClick={() => handleDeleteCard(card.id)}
                   className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/20 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/30"
+                  title="Excluir Cartão"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -408,14 +458,14 @@ export function CreditCardsView() {
             <div className="lg:col-span-2 space-y-6">
               <div className="rounded-xl bg-card border border-border p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium text-card-foreground">Recent Purchases</h3>
+                  <h3 className="font-medium text-card-foreground">Compras Recentes</h3>
                   <AddPurchaseDialog cardId={selectedCard.id} onSuccess={() => {}} />
                 </div>
                 <div className="space-y-3">
                   {(selectedCard.purchases || []).map((purchase: CardPurchase) => (
                     <div
                       key={purchase.id}
-                      className="flex items-center justify-between py-3 border-b border-border last:border-0 group"
+                      className="flex items-center justify-between py-3 border-b border-border last:border-0 group hover:bg-secondary/20 px-2 rounded-md transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-muted-foreground">
@@ -425,18 +475,31 @@ export function CreditCardsView() {
                           <p className="text-sm font-medium text-foreground">
                             {purchase.description}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {purchase.category} - {new Date(purchase.purchase_date).toLocaleDateString()}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-muted-foreground">
+                              {purchase.category} - {new Date(purchase.purchase_date).toLocaleDateString("pt-BR")}
+                            </p>
+                            {purchase.is_installment && (
+                              <span className="text-[10px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded-full border border-orange-500/20">
+                                {purchase.total_installments}x
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="text-right flex flex-col items-end">
                         <p className="text-sm font-medium text-foreground">
                           -{formatCurrency(Number(purchase.amount))}
                         </p>
+                        {purchase.is_installment && purchase.total_installments && (
+                           <p className="text-[10px] text-muted-foreground">
+                             (Parcela: {formatCurrency(Number(purchase.amount) / purchase.total_installments)})
+                           </p>
+                        )}
                         <button
                           onClick={() => handleDeletePurchase(purchase.id)}
-                          className="p-1 rounded text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
+                          className="mt-1 p-1 rounded text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
+                          title="Excluir Compra"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -445,7 +508,7 @@ export function CreditCardsView() {
                   ))}
                   {(!selectedCard.purchases || selectedCard.purchases.length === 0) && (
                     <p className="text-center text-muted-foreground py-8">
-                      No recent purchases
+                      Nenhuma compra registrada neste cartão.
                     </p>
                   )}
                 </div>
