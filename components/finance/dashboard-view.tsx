@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useFinancialSummary, useCreditCards } from "@/hooks/use-finance-data";
+import { useCurrencyFormatter } from "@/hooks/use-currency-formatter";
 import {
   Area,
   AreaChart,
@@ -26,38 +27,12 @@ import {
   Tooltip,
 } from "recharts";
 
-// Dados mockados para exemplo
-const monthlyNetWorthData = [
-  { month: "Ago", netWorth: 145000 },
-  { month: "Set", netWorth: 152000 },
-  { month: "Out", netWorth: 148000 },
-  { month: "Nov", netWorth: 158000 },
-  { month: "Dez", netWorth: 165000 },
-  { month: "Jan", netWorth: 178500 },
-];
-
-const cashFlowData = [
-  { month: "Ago", income: 11500, expenses: 5200 },
-  { month: "Set", income: 12000, expenses: 5800 },
-  { month: "Out", income: 11800, expenses: 6100 },
-  { month: "Nov", income: 13500, expenses: 5500 },
-  { month: "Dez", income: 14200, expenses: 7800 },
-  { month: "Jan", income: 12300, expenses: 5400 },
-];
-
 export function DashboardView() {
   const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
   const { data: cards, isLoading: cardsLoading } = useCreditCards();
+  const { formatCurrency } = useCurrencyFormatter();
 
   const isLoading = summaryLoading || cardsLoading;
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
 
   if (isLoading) {
     return (
@@ -75,15 +50,21 @@ export function DashboardView() {
   const investmentGain = summary?.totalInvestmentGain || 0;
   const creditCardDebt = summary?.totalCreditCardDebt || 0;
   const savingsRate = summary?.savingsRate?.toFixed(1) || "0";
+  const monthlyData = summary?.monthlyData || [];
+  
+  const netWorthData = monthlyData.map(d => ({
+    month: d.month,
+    netWorth: d.netWorth
+  }));
 
-  const expenseBreakdown = [
-    { name: "Fixas", value: monthlyExpenses * 0.6, color: "#3b82f6" },
-    { name: "Cartões", value: creditCardDebt, color: "#10b981" },
-    { name: "Extras", value: monthlyExpenses * 0.2, color: "#f59e0b" },
-    { name: "Outros", value: monthlyExpenses * 0.2, color: "#8b5cf6" },
-  ].filter(item => item.value > 0);
+  const cashFlowData = monthlyData.map(d => ({
+    month: d.month,
+    income: d.income,
+    expenses: d.expenses
+  }));
 
-  // Get recent purchases from cards
+  const expenseBreakdown = summary?.expenseBreakdown || [];
+
   const recentPurchases = cards
     ?.flatMap((card) =>
       (card.purchases || []).map((p) => ({ ...p, cardName: card.name }))
@@ -108,49 +89,55 @@ export function DashboardView() {
           title="Patrimônio"
           value={formatCurrency(netWorth)}
           icon={DollarSign}
-          trend={{ value: 8.2, isPositive: netWorth >= 0 }}
+          trend={{ value: 0, isPositive: netWorth >= 0 }}
+          explanation="Seu valor líquido real. É calculado somando todos os seus ativos (investimentos) e subtraindo seus passivos (dívidas de cartão)."
         />
         <StatCard
           title="Renda Mensal"
           value={formatCurrency(monthlyIncome)}
           icon={Wallet}
-          trend={{ value: 3.5, isPositive: true }}
+          trend={{ value: 0, isPositive: true }}
+          explanation="Soma de todas as suas entradas de dinheiro recorrentes e ativas configuradas para este mês."
         />
         <StatCard
           title="Despesas Mensais"
           value={formatCurrency(monthlyExpenses)}
           icon={TrendingDown}
-          trend={{ value: -2.1, isPositive: true }}
+          trend={{ value: 0, isPositive: true }}
+          explanation="Total gasto no mês atual. Inclui despesas fixas, gastos extras e o valor das faturas de cartão deste mês."
         />
         <StatCard
           title="Fluxo de Caixa"
           value={formatCurrency(monthlyCashFlow)}
           subtitle={`${savingsRate}% taxa de poupança`}
           icon={TrendingUp}
+          explanation="A diferença entre o que você ganhou e o que gastou. Se positivo, você está acumulando riqueza; se negativo, está consumindo reservas."
         />
         <StatCard
           title="Investimentos"
           value={formatCurrency(investmentValue)}
           subtitle={`${investmentGain > 0 ? "+" : ""}${formatCurrency(investmentGain)} retorno`}
           icon={PiggyBank}
-          trend={{ value: 15.4, isPositive: investmentGain >= 0 }}
+          trend={{ value: 0, isPositive: investmentGain >= 0 }}
+          explanation="Valor total atual da sua carteira de investimentos (Ações, Cripto, Renda Fixa) atualizado com a cotação mais recente."
         />
         <StatCard
-          title="Faturas Cartão"
+          title="Fatura Cartões"
           value={formatCurrency(creditCardDebt)}
           icon={CreditCard}
-          trend={{ value: -5.2, isPositive: true }}
+          trend={{ value: 0, isPositive: true }}
+          explanation="Valor consolidado das faturas a pagar neste mês em todos os seus cartões, somando compras à vista e parcelas vigentes."
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl bg-card border border-border p-5">
           <h3 className="font-medium text-card-foreground mb-4">
-            Evolução Patrimonial
+            Evolução Patrimonial (Estimada)
           </h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthlyNetWorthData}>
+              <AreaChart data={netWorthData}>
                 <defs>
                   <linearGradient
                     id="netWorthGradient"
@@ -186,7 +173,7 @@ export function DashboardView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => `k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -231,7 +218,7 @@ export function DashboardView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => `k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -345,11 +332,11 @@ export function DashboardView() {
                     <p className="text-sm font-medium text-foreground">
                       -{formatCurrency(Number(purchase.amount))}
                     </p>
-                     {purchase.is_installment && purchase.total_installments && (
-                        <p className="text-[10px] text-muted-foreground">
-                          (Parcela: {formatCurrency(Number(purchase.amount) / purchase.total_installments)})
-                        </p>
-                     )}
+                    {purchase.is_installment && purchase.total_installments && (
+                       <p className="text-[10px] text-muted-foreground">
+                         (Parcela: {formatCurrency(Number(purchase.amount) / purchase.total_installments)})
+                       </p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {new Date(purchase.purchase_date).toLocaleDateString("pt-BR", {
                         day: "2-digit",

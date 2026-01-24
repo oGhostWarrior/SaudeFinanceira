@@ -17,6 +17,9 @@ import type {
   ExtraExpenseInput,
   InvestmentInput,
   IncomeSourceInput,
+  FinancialSummary,
+  MonthlyChartData,
+  ExpenseBreakdownItem,
 } from "@/lib/types";
 
 // Helper to get current user
@@ -163,7 +166,6 @@ export async function createCardPurchase(purchase: CardPurchaseInput): Promise<C
     .single();
 
   if (!cardError && card) {
-    // CORREÇÃO: Soma o valor TOTAL da compra ao saldo (impactando o limite corretamente)
     const newBalance = Number(card.current_balance) + Number(purchase.amount);
     
     await supabase
@@ -568,36 +570,46 @@ export async function createIncomeHistory(history: Omit<IncomeHistory, 'id' | 'u
   return data;
 }
 
-// ============ DASHBOARD SUMMARY (LÓGICA AJUSTADA AQUI) ============
-export async function getFinancialSummary() {
+// ============ DASHBOARD SUMMARY============
+export async function getFinancialSummary(): Promise<FinancialSummary> {
   const user = await getCurrentUser();
   const supabase = await createClient();
+  
+  // Datas para filtro
+  const today = new Date();
+  const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1).toISOString();
   const [
     { data: cards },
     { data: fixedExpenses },
     { data: extraExpenses },
     { data: investments },
     { data: incomeSources },
+    { data: incomeHistory },
+    { data: cardPurchases }
   ] = await Promise.all([
     supabase.from("credit_cards").select("current_balance, credit_limit, card_purchases(amount, is_installment, total_installments)").eq("user_id", user.id),
-    supabase.from("fixed_expenses").select("amount, is_active").eq("user_id", user.id),
-    supabase.from("extra_expenses").select("amount, date").eq("user_id", user.id),
+    supabase.from("fixed_expenses").select("amount, is_active, category").eq("user_id", user.id),
+    supabase.from("extra_expenses").select("amount, expense_date, category").eq("user_id", user.id).gte("expense_date", sixMonthsAgo),
     supabase.from("investments").select("quantity, current_price, purchase_price").eq("user_id", user.id),
     supabase.from("income_sources").select("amount, frequency, is_active").eq("user_id", user.id),
+    supabase.from("income_history").select("amount, date").eq("user_id", user.id).gte("date", sixMonthsAgo),
+    supabase.from("card_purchases").select("amount, purchase_date, category, is_installment, total_installments").eq("user_id", user.id).gte("purchase_date", sixMonthsAgo)
   ]);
 
+  // --- CÁLCULOS TOTAIS (SNAPSHOT ATUAL) ---
   const totalCreditCardDebt = cards?.reduce((sum, c) => sum + Number(c.current_balance), 0) || 0;
   const totalCreditLimit = cards?.reduce((sum, c) => sum + Number(c.credit_limit), 0) || 0;
-  let monthlyCreditCardBill = 0;
+  
+  // Fatura mensal atual (parcelas + à vista do mês)
+  let currentMonthlyCardBill = 0;
   cards?.forEach(card => {
-    // @ts-ignore (Supabase types join)
     const purchases = card.card_purchases as any[];
     if (purchases) {
       purchases.forEach(p => {
         if (p.is_installment && p.total_installments && p.total_installments > 0) {
-          monthlyCreditCardBill += (Number(p.amount) / p.total_installments);
+          currentMonthlyCardBill += (Number(p.amount) / p.total_installments);
         } else {
-          monthlyCreditCardBill += Number(p.amount);
+          currentMonthlyCardBill += Number(p.amount);
         }
       });
     }
@@ -607,9 +619,9 @@ export async function getFinancialSummary() {
     ?.filter(e => e.is_active)
     .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
   
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonthStr = today.toISOString().slice(0, 7);
   const monthlyExtraExpenses = extraExpenses
-    ?.filter(e => e.date.startsWith(currentMonth))
+    ?.filter(e => e.expense_date.startsWith(currentMonthStr))
     .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
   
   const totalInvestmentValue = investments?.reduce((sum, i) => 
@@ -619,22 +631,115 @@ export async function getFinancialSummary() {
     sum + (Number(i.quantity) * Number(i.purchase_price)), 0) || 0;
 
   const frequencyMultiplier: Record<string, number> = {
-    'weekly': 4.33,
-    'bi-weekly': 2.17,
-    'monthly': 1,
-    'quarterly': 0.33,
-    'annually': 0.083,
+    'weekly': 4.33, 'bi-weekly': 2.17, 'monthly': 1, 'quarterly': 0.33, 'annually': 0.083,
   };
   
   const monthlyIncome = incomeSources
     ?.filter(s => s.is_active)
     .reduce((sum, s) => sum + (Number(s.amount) * (frequencyMultiplier[s.frequency] || 1)), 0) || 0;
-  const monthlyExpenses = monthlyFixedExpenses + monthlyExtraExpenses + monthlyCreditCardBill;
+
+  const monthlyExpenses = monthlyFixedExpenses + monthlyExtraExpenses + currentMonthlyCardBill;
   const monthlyCashFlow = monthlyIncome - monthlyExpenses;
   const totalAssets = totalInvestmentValue;
   const totalLiabilities = totalCreditCardDebt;
   const totalNetWorth = totalAssets - totalLiabilities;
   const savingsRate = monthlyIncome > 0 ? (monthlyCashFlow / monthlyIncome) * 100 : 0;
+  // --- CÁLCULOS HISTÓRICOS (GRÁFICOS) ---
+  
+  const monthlyData: MonthlyChartData[] = [];
+  // Gera os últimos 6 meses
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const monthKey = d.toISOString().slice(0, 7);
+    const monthLabel = d.toLocaleDateString('pt-BR', { month: 'short' });
+
+    // 1. Renda do mês
+    let incomeSum = incomeHistory
+      ?.filter(h => h.date.startsWith(monthKey))
+      .reduce((sum, h) => sum + Number(h.amount), 0) || 0;
+    
+    if (i === 0 && incomeSum === 0) incomeSum = monthlyIncome;
+
+    // 2. Despesas do mês
+    const extraSum = extraExpenses
+      ?.filter(e => e.expense_date.startsWith(monthKey))
+      .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+    
+    // Calcular despesa de cartão para este mês histórico
+    const cardSum = cardPurchases
+      ?.filter(p => p.purchase_date.startsWith(monthKey))
+      .reduce((sum, p) => {
+        if (p.is_installment && p.total_installments) {
+          return sum + (Number(p.amount) / p.total_installments); 
+        }
+        return sum + Number(p.amount);
+      }, 0) || 0;
+
+    const expensesSum = monthlyFixedExpenses + extraSum + cardSum;
+
+    monthlyData.push({
+      month: monthLabel,
+      income: incomeSum,
+      expenses: expensesSum,
+      netWorth: 0
+    });
+  }
+
+  let currentCalculatedNetWorth = totalNetWorth;
+  for (let i = monthlyData.length - 1; i >= 0; i--) {
+    monthlyData[i].netWorth = currentCalculatedNetWorth;
+    const cashFlow = monthlyData[i].income - monthlyData[i].expenses;
+    currentCalculatedNetWorth = currentCalculatedNetWorth - cashFlow;
+  }
+
+  // Agrupar despesas do mês atual por categoria
+  const categoryMap = new Map<string, number>();
+
+  // 1. Fixas
+  fixedExpenses?.forEach(e => {
+    if(e.is_active) {
+      const cat = e.category || "Outros";
+      categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(e.amount));
+    }
+  });
+
+  // 2. Extras do mês
+  extraExpenses?.filter(e => e.expense_date.startsWith(currentMonthStr)).forEach(e => {
+    const cat = e.category || "Outros";
+    categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(e.amount));
+  });
+
+  // 3. Cartão do mês categoria.
+  cardPurchases?.filter(p => p.purchase_date.startsWith(currentMonthStr)).forEach(p => {
+    const cat = p.category || "Shopping";
+    const val = p.is_installment && p.total_installments ? (Number(p.amount) / p.total_installments) : Number(p.amount);
+    categoryMap.set(cat, (categoryMap.get(cat) || 0) + val);
+  });
+
+  const categoryColors: Record<string, string> = {
+    'Shopping': '#3b82f6',
+    'Groceries': '#10b981',
+    'Mercado': '#10b981',
+    'Entertainment': '#f59e0b',
+    'Lazer': '#f59e0b',
+    'Transportation': '#ef4444',
+    'Transporte': '#ef4444',
+    'Travel': '#8b5cf6',
+    'Viagem': '#8b5cf6',
+    'Dining': '#ec4899',
+    'Alimentação': '#ec4899',
+    'utilities': '#06b6d4',
+    'insurance': '#64748b',
+    'subscriptions': '#6366f1',
+    'rent': '#d946ef',
+    'Outros': '#9ca3af',
+  };
+
+  const expenseBreakdown: ExpenseBreakdownItem[] = Array.from(categoryMap.entries()).map(([name, value]) => ({
+    name,
+    value,
+    color: categoryColors[name] || '#9ca3af'
+  })).sort((a, b) => b.value - a.value);
 
   return {
     totalNetWorth,
@@ -644,13 +749,14 @@ export async function getFinancialSummary() {
     monthlyExpenses,
     monthlyCashFlow,
     savingsRate,
-    totalCreditCardDebt: monthlyCreditCardBill,
-    totalDebtActual: totalCreditCardDebt,
+    totalCreditCardDebt: currentMonthlyCardBill,
     totalCreditLimit,
     totalInvestmentValue,
     totalInvestmentGain: totalInvestmentValue - totalInvestmentCost,
     cardCount: cards?.length || 0,
     investmentCount: investments?.length || 0,
     incomeSourceCount: incomeSources?.length || 0,
+    monthlyData,
+    expenseBreakdown
   };
 }

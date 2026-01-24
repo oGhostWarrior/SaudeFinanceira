@@ -96,6 +96,19 @@ export interface IncomeHistory {
   created_at: string;
 }
 
+export interface MonthlyChartData {
+  month: string;
+  income: number;
+  expenses: number;
+  netWorth: number;
+}
+
+export interface ExpenseBreakdownItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export interface FinancialSummary {
   totalNetWorth: number;
   totalAssets: number;
@@ -104,6 +117,15 @@ export interface FinancialSummary {
   monthlyExpenses: number;
   monthlyCashFlow: number;
   savingsRate: number;
+  totalCreditCardDebt: number;
+  totalCreditLimit: number;
+  totalInvestmentValue: number;
+  totalInvestmentGain: number;
+  cardCount: number;
+  investmentCount: number;
+  incomeSourceCount: number;
+  monthlyData: MonthlyChartData[];
+  expenseBreakdown: ExpenseBreakdownItem[];
 }
 
 // Input types for creating/updating records
