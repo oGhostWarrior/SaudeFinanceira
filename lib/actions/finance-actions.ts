@@ -20,6 +20,9 @@ import type {
   FinancialSummary,
   MonthlyChartData,
   ExpenseBreakdownItem,
+  ExpenseChartData,
+  IncomeChartData,
+  InvestmentChartData,
 } from "@/lib/types";
 
 // Helper to get current user
@@ -590,9 +593,9 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
     supabase.from("credit_cards").select("current_balance, credit_limit, card_purchases(amount, is_installment, total_installments)").eq("user_id", user.id),
     supabase.from("fixed_expenses").select("amount, is_active, category").eq("user_id", user.id),
     supabase.from("extra_expenses").select("amount, expense_date, category").eq("user_id", user.id).gte("expense_date", sixMonthsAgo),
-    supabase.from("investments").select("quantity, current_price, purchase_price").eq("user_id", user.id),
-    supabase.from("income_sources").select("amount, frequency, is_active").eq("user_id", user.id),
-    supabase.from("income_history").select("amount, date").eq("user_id", user.id).gte("date", sixMonthsAgo),
+    supabase.from("investments").select("quantity, current_price, purchase_price, purchase_date, type").eq("user_id", user.id),
+    supabase.from("income_sources").select("id, amount, frequency, is_active, type").eq("user_id", user.id),
+    supabase.from("income_history").select("amount, date, income_source_id").eq("user_id", user.id).gte("date", sixMonthsAgo),
     supabase.from("card_purchases").select("amount, purchase_date, category, is_installment, total_installments").eq("user_id", user.id).gte("purchase_date", sixMonthsAgo)
   ]);
 
@@ -645,27 +648,50 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   const totalNetWorth = totalAssets - totalLiabilities;
   const savingsRate = monthlyIncome > 0 ? (monthlyCashFlow / monthlyIncome) * 100 : 0;
   // --- CÁLCULOS HISTÓRICOS (GRÁFICOS) ---
-  
+  const expenseChartData: ExpenseChartData[] = [];
+  const incomeChartData: IncomeChartData[] = [];
+  const investmentChartData: InvestmentChartData[] = [];
   const monthlyData: MonthlyChartData[] = [];
-  // Gera os últimos 6 meses
+  
   for (let i = 5; i >= 0; i--) {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
     const monthKey = d.toISOString().slice(0, 7);
     const monthLabel = d.toLocaleDateString('pt-BR', { month: 'short' });
 
-    // 1. Renda do mês
-    let incomeSum = incomeHistory
-      ?.filter(h => h.date.startsWith(monthKey))
-      .reduce((sum, h) => sum + Number(h.amount), 0) || 0;
+   const monthIncomeHistory = incomeHistory?.filter(h => h.date.startsWith(monthKey)) || [];
     
-    if (i === 0 && incomeSum === 0) incomeSum = monthlyIncome;
+    // Agrupa por Ativa/Passiva
+    let activeIncomeSum = 0;
+    let passiveIncomeSum = 0;
+
+    monthIncomeHistory.forEach(h => {
+      const source = incomeSources?.find(s => s.id === h.income_source_id);
+      if (source?.type === 'passive') {
+        passiveIncomeSum += Number(h.amount);
+      } else {
+        activeIncomeSum += Number(h.amount);
+      }
+    });
+
+    // Se mês atual e sem histórico, usa projeção baseada nas fontes ativas
+    if (i === 0 && activeIncomeSum === 0 && passiveIncomeSum === 0) {
+       incomeSources?.filter(s => s.is_active).forEach(s => {
+          const val = Number(s.amount) * (frequencyMultiplier[s.frequency] || 1);
+          if (s.type === 'passive') passiveIncomeSum += val;
+          else activeIncomeSum += val;
+       });
+    }
+
+    const totalIncomeMonth = activeIncomeSum + passiveIncomeSum;
+    incomeChartData.push({ month: monthLabel, active: activeIncomeSum, passive: passiveIncomeSum });
 
     // 2. Despesas do mês
+    // Extra
     const extraSum = extraExpenses
       ?.filter(e => e.expense_date.startsWith(monthKey))
       .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
     
-    // Calcular despesa de cartão para este mês histórico
+    // Cartão (estimado)
     const cardSum = cardPurchases
       ?.filter(p => p.purchase_date.startsWith(monthKey))
       .reduce((sum, p) => {
@@ -675,16 +701,34 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
         return sum + Number(p.amount);
       }, 0) || 0;
 
-    const expensesSum = monthlyFixedExpenses + extraSum + cardSum;
+    // Fixas (Assumimos constante para histórico)
+    const fixedSum = monthlyFixedExpenses;
+
+    const totalExpensesMonth = fixedSum + extraSum + cardSum;
+    expenseChartData.push({ month: monthLabel, fixed: fixedSum, extra: extraSum }); // Nota: O gráfico de despesas pede Fixed vs Extra (pode somar cartão no extra ou ignorar)
 
     monthlyData.push({
       month: monthLabel,
-      income: incomeSum,
-      expenses: expensesSum,
-      netWorth: 0
+      income: totalIncomeMonth,
+      expenses: totalExpensesMonth,
+      netWorth: 0 // Calculado abaixo
+    });
+
+    // 3. Investimentos (Histórico de Custo)
+    // Soma purchase_price * quantity de investimentos comprados ATÉ o fim deste mês
+    const monthEndDate = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString();
+    
+    const investedCostUntilNow = investments
+      ?.filter(inv => inv.purchase_date <= monthEndDate)
+      .reduce((sum, inv) => sum + (Number(inv.quantity) * Number(inv.purchase_price)), 0) || 0;
+
+    investmentChartData.push({
+      month: monthLabel,
+      value: investedCostUntilNow
     });
   }
 
+  // Calcular Net Worth Histórico (Retroativo)
   let currentCalculatedNetWorth = totalNetWorth;
   for (let i = monthlyData.length - 1; i >= 0; i--) {
     monthlyData[i].netWorth = currentCalculatedNetWorth;
@@ -692,24 +736,18 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
     currentCalculatedNetWorth = currentCalculatedNetWorth - cashFlow;
   }
 
-  // Agrupar despesas do mês atual por categoria
+  // --- CÁLCULO DE CATEGORIAS (PIE CHART) ---
   const categoryMap = new Map<string, number>();
-
-  // 1. Fixas
   fixedExpenses?.forEach(e => {
     if(e.is_active) {
       const cat = e.category || "Outros";
       categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(e.amount));
     }
   });
-
-  // 2. Extras do mês
   extraExpenses?.filter(e => e.expense_date.startsWith(currentMonthStr)).forEach(e => {
     const cat = e.category || "Outros";
     categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(e.amount));
   });
-
-  // 3. Cartão do mês categoria.
   cardPurchases?.filter(p => p.purchase_date.startsWith(currentMonthStr)).forEach(p => {
     const cat = p.category || "Shopping";
     const val = p.is_installment && p.total_installments ? (Number(p.amount) / p.total_installments) : Number(p.amount);
@@ -717,21 +755,11 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   });
 
   const categoryColors: Record<string, string> = {
-    'Shopping': '#3b82f6',
-    'Groceries': '#10b981',
-    'Mercado': '#10b981',
-    'Entertainment': '#f59e0b',
-    'Lazer': '#f59e0b',
-    'Transportation': '#ef4444',
-    'Transporte': '#ef4444',
-    'Travel': '#8b5cf6',
-    'Viagem': '#8b5cf6',
-    'Dining': '#ec4899',
-    'Alimentação': '#ec4899',
-    'utilities': '#06b6d4',
-    'insurance': '#64748b',
-    'subscriptions': '#6366f1',
-    'rent': '#d946ef',
+    'Shopping': '#3b82f6', 'Groceries': '#10b981', 'Mercado': '#10b981',
+    'Entertainment': '#f59e0b', 'Lazer': '#f59e0b', 'Transportation': '#ef4444',
+    'Transporte': '#ef4444', 'Travel': '#8b5cf6', 'Viagem': '#8b5cf6',
+    'Dining': '#ec4899', 'Alimentação': '#ec4899', 'utilities': '#06b6d4',
+    'insurance': '#64748b', 'subscriptions': '#6366f1', 'rent': '#d946ef',
     'Outros': '#9ca3af',
   };
 
@@ -757,6 +785,9 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
     investmentCount: investments?.length || 0,
     incomeSourceCount: incomeSources?.length || 0,
     monthlyData,
-    expenseBreakdown
+    expenseBreakdown,
+    expenseChartData,
+    incomeChartData,
+    investmentChartData
   };
 }

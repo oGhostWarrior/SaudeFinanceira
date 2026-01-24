@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useFixedExpenses, useExtraExpenses } from "@/hooks/use-finance-data";
+import { useFixedExpenses, useExtraExpenses, useFinancialSummary } from "@/hooks/use-finance-data"; // Importar useFinancialSummary
+import { useCurrencyFormatter } from "@/hooks/use-currency-formatter";
 import { createFixedExpense, createExtraExpense, updateFixedExpense, deleteFixedExpense, deleteExtraExpense } from "@/lib/actions/finance-actions";
 import type { FixedExpense, ExtraExpense } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -229,25 +230,14 @@ function AddExtraExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
 
 export function ExpensesView() {
   const [activeTab, setActiveTab] = useState<"fixed" | "extra">("fixed");
+  
+  // Hooks de dados
   const { data: fixedExpenses, isLoading: fixedLoading } = useFixedExpenses();
   const { data: extraExpenses, isLoading: extraLoading } = useExtraExpenses();
+  const { data: summary, isLoading: summaryLoading } = useFinancialSummary(); // Novo hook
+  const { formatCurrency } = useCurrencyFormatter();
 
-  const isLoading = fixedLoading || extraLoading;
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const isLoading = fixedLoading || extraLoading || summaryLoading;
 
   const expenses = fixedExpenses || [];
   const extras = extraExpenses || [];
@@ -291,26 +281,21 @@ export function ExpensesView() {
     color: categoryConfig[category]?.color || "#6b7280",
   })).filter(item => item.value > 0);
 
-  const monthlyTrendData = [
-    { month: "Aug", fixed: 2850, extra: 320 },
-    { month: "Sep", fixed: 2920, extra: 480 },
-    { month: "Oct", fixed: 2880, extra: 650 },
-    { month: "Nov", fixed: 2950, extra: 420 },
-    { month: "Dec", fixed: 3100, extra: 890 },
-    { month: "Jan", fixed: totalFixed, extra: totalExtra },
-  ];
+  const monthlyTrendData = summary?.expenseChartData || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Expenses</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Despesas</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Track fixed and miscellaneous expenses
+             Acompanhe despesas fixas e gastos extras
           </p>
         </div>
         <div className="flex gap-2">
+          {/* @ts-ignore */}
           <AddExtraExpenseDialog onSuccess={() => {}} />
+          {/* @ts-ignore */}
           <AddFixedExpenseDialog onSuccess={() => {}} />
         </div>
       </div>
@@ -322,7 +307,7 @@ export function ExpensesView() {
               <Calendar className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Monthly Fixed</p>
+              <p className="text-sm text-muted-foreground">Mensal Fixo</p>
               <p className="text-xl font-semibold text-foreground">
                 {formatCurrency(totalFixed)}
               </p>
@@ -335,7 +320,7 @@ export function ExpensesView() {
               <DollarSign className="h-5 w-5 text-yellow-500" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Extra This Month</p>
+              <p className="text-sm text-muted-foreground">Extras (Mês)</p>
               <p className="text-xl font-semibold text-foreground">
                 {formatCurrency(totalExtra)}
               </p>
@@ -348,7 +333,7 @@ export function ExpensesView() {
               <DollarSign className="h-5 w-5 text-destructive" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Expenses</p>
+              <p className="text-sm text-muted-foreground">Total Despesas</p>
               <p className="text-xl font-semibold text-foreground">
                 {formatCurrency(totalFixed + totalExtra)}
               </p>
@@ -359,20 +344,21 @@ export function ExpensesView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">By Category</h3>
+          <h3 className="font-medium text-card-foreground mb-4">Por Categoria</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieData.length > 0 ? pieData : [{ name: "No Data", value: 1, color: "#374151" }]}
+                  data={pieData.length > 0 ? pieData : [{ name: "Sem Dados", value: 1, color: "#374151" }]}
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
                   outerRadius={70}
                   paddingAngle={2}
                   dataKey="value"
+                  nameKey="name"
                 >
-                  {(pieData.length > 0 ? pieData : [{ name: "No Data", value: 1, color: "#374151" }]).map((entry, index) => (
+                  {(pieData.length > 0 ? pieData : [{ name: "Sem Dados", value: 1, color: "#374151" }]).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -383,7 +369,8 @@ export function ExpensesView() {
                     borderRadius: "8px",
                     color: "oklch(0.98 0 0)",
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  itemStyle={{ color: "oklch(0.98 0 0)" }}
+                  formatter={(value: number, name: string) => [formatCurrency(value), name]}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -405,7 +392,7 @@ export function ExpensesView() {
         </div>
 
         <div className="lg:col-span-2 rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Monthly Trend</h3>
+          <h3 className="font-medium text-card-foreground mb-4">Tendência Mensal</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyTrendData}>
@@ -424,7 +411,7 @@ export function ExpensesView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
+                  tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -435,8 +422,8 @@ export function ExpensesView() {
                   }}
                   formatter={(value: number) => formatCurrency(value)}
                 />
-                <Bar dataKey="fixed" name="Fixed" stackId="a" fill="oklch(0.72 0.19 160)" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="extra" name="Extra" stackId="a" fill="oklch(0.75 0.15 80)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="fixed" name="Fixas" stackId="a" fill="oklch(0.72 0.19 160)" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="extra" name="Extras" stackId="a" fill="oklch(0.75 0.15 80)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

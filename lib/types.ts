@@ -109,6 +109,23 @@ export interface ExpenseBreakdownItem {
   color: string;
 }
 
+export interface ExpenseChartData {
+  month: string;
+  fixed: number;
+  extra: number;
+}
+
+export interface IncomeChartData {
+  month: string;
+  active: number;
+  passive: number;
+}
+
+export interface InvestmentChartData {
+  month: string;
+  value: number;
+}
+
 export interface FinancialSummary {
   totalNetWorth: number;
   totalAssets: number;
@@ -124,8 +141,12 @@ export interface FinancialSummary {
   cardCount: number;
   investmentCount: number;
   incomeSourceCount: number;
+
   monthlyData: MonthlyChartData[];
   expenseBreakdown: ExpenseBreakdownItem[];
+  expenseChartData: ExpenseChartData[];
+  incomeChartData: IncomeChartData[];
+  investmentChartData: InvestmentChartData[];
 }
 
 // Input types for creating/updating records

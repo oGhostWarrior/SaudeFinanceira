@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { useIncomeSources } from "@/hooks/use-finance-data";
+import { useIncomeSources, useFinancialSummary } from "@/hooks/use-finance-data";
+import { useCurrencyFormatter } from "@/hooks/use-currency-formatter";
 import { createIncomeSource, updateIncomeSource, deleteIncomeSource } from "@/lib/actions/finance-actions";
 import type { IncomeSource } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -48,15 +49,6 @@ const sourceIcons: Record<string, React.ReactNode> = {
   YouTube: <Youtube className="h-4 w-4" />,
   Dividends: <PiggyBank className="h-4 w-4" />,
 };
-
-const incomeHistoryData = [
-  { month: "Aug", active: 10000, passive: 2450 },
-  { month: "Sep", active: 10000, passive: 2600 },
-  { month: "Oct", active: 10500, passive: 2550 },
-  { month: "Nov", active: 11200, passive: 2650 },
-  { month: "Dec", active: 12500, passive: 2700 },
-  { month: "Jan", active: 10000, passive: 2600 },
-];
 
 function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
@@ -162,6 +154,7 @@ function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
 
 export function IncomeView() {
   const { data: incomeSources, isLoading } = useIncomeSources();
+  const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
@@ -179,7 +172,9 @@ export function IncomeView() {
     );
   }
 
+  const incomeHistoryData = summary?.incomeChartData || [];
   const incomes = incomeSources || [];
+  
 
   const toggleIncome = async (income: IncomeSource) => {
     await updateIncomeSource(income.id, { is_active: !income.is_active });
@@ -234,13 +229,15 @@ export function IncomeView() {
     }
   };
 
-  const projectionData = [
-    { month: "Feb", projected: monthlyIncome, cumulative: monthlyIncome },
-    { month: "Mar", projected: monthlyIncome, cumulative: monthlyIncome * 2 },
-    { month: "Apr", projected: monthlyIncome, cumulative: monthlyIncome * 3 },
-    { month: "May", projected: monthlyIncome, cumulative: monthlyIncome * 4 },
-    { month: "Jun", projected: monthlyIncome, cumulative: monthlyIncome * 5 },
-  ];
+  const projectionData = [];
+  const today = new Date();
+  for(let i=1; i<=5; i++) {
+     const nextMonth = new Date(today.getFullYear(), today.getMonth() + i, 1);
+     projectionData.push({
+        month: nextMonth.toLocaleDateString('pt-BR', { month: 'short' }),
+        cumulative: monthlyIncome * i
+     });
+  }
 
   return (
     <div className="space-y-6">
@@ -327,7 +324,7 @@ export function IncomeView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -358,6 +355,7 @@ export function IncomeView() {
                   outerRadius={70}
                   paddingAngle={4}
                   dataKey="value"
+                  nameKey="name"
                 >
                   {(incomeDistribution.length > 0 ? incomeDistribution : [{ name: "No Data", value: 1, color: "#374151" }]).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -370,7 +368,8 @@ export function IncomeView() {
                     borderRadius: "8px",
                     color: "oklch(0.98 0 0)",
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  itemStyle={{ color: "oklch(0.98 0 0)" }}
+                  formatter={(value: number, name: string) => [formatCurrency(value), name]}
                 />
               </PieChart>
             </ResponsiveContainer>

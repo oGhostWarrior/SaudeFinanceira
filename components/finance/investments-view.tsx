@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useInvestments } from "@/hooks/use-finance-data";
+import { useInvestments, useFinancialSummary } from "@/hooks/use-finance-data";
+import { useCurrencyFormatter } from "@/hooks/use-currency-formatter";
 import { createInvestment, deleteInvestment, updateInvestment, updateCryptoPrices } from "@/lib/actions/finance-actions";
 import type { Investment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -51,15 +52,6 @@ const typeConfig: Record<string, { icon: React.ReactNode; color: string; label: 
   crypto: { icon: <Bitcoin className="h-4 w-4" />, color: "#f97316", label: "Crypto" },
   real_estate: { icon: <Building2 className="h-4 w-4" />, color: "#06b6d4", label: "Real Estate" },
 };
-
-const portfolioHistoryData = [
-  { month: "Aug", value: 95000 },
-  { month: "Sep", value: 98000 },
-  { month: "Oct", value: 92000 },
-  { month: "Nov", value: 105000 },
-  { month: "Dec", value: 118000 },
-  { month: "Jan", value: 135000 },
-];
 
 function AddInvestmentDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
@@ -168,22 +160,13 @@ function AddInvestmentDialog({ onSuccess }: { onSuccess: () => void }) {
 
 export function InvestmentsView() {
   const [filter, setFilter] = useState<string>("all");
-  const { data: investments, isLoading } = useInvestments();
+  const { data: investments, isLoading: invLoading } = useInvestments();
+  const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
   const [isUpdating, setIsUpdating] = useState(false);
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
+  const { formatCurrency } = useCurrencyFormatter();
+  const isLoading = invLoading || summaryLoading;
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const portfolioHistoryData = summary?.investmentChartData || [];
 
   const handleUpdatePrices = async () => {
     setIsUpdating(true);
@@ -318,7 +301,7 @@ export function InvestmentsView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Portfolio Performance</h3>
+          <h3 className="font-medium text-card-foreground mb-4">Evolução do Valor Investido (Custo)</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={portfolioHistoryData}>
@@ -329,34 +312,10 @@ export function InvestmentsView() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.25 0.01 260)" vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "oklch(0.15 0.01 260)",
-                    border: "1px solid oklch(0.25 0.01 260)",
-                    borderRadius: "8px",
-                    color: "oklch(0.98 0 0)",
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), "Portfolio Value"]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="oklch(0.72 0.19 160)"
-                  strokeWidth={2}
-                  fill="url(#portfolioGradient)"
-                />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
+                <Tooltip contentStyle={{ backgroundColor: "oklch(0.15 0.01 260)", border: "1px solid oklch(0.25 0.01 260)", borderRadius: "8px", color: "oklch(0.98 0 0)" }} formatter={(value: number) => [formatCurrency(value), "Valor Investido"]} />
+                <Area type="monotone" dataKey="value" stroke="oklch(0.72 0.19 160)" strokeWidth={2} fill="url(#portfolioGradient)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -375,6 +334,7 @@ export function InvestmentsView() {
                   outerRadius={70}
                   paddingAngle={2}
                   dataKey="value"
+                  nameKey="name"
                 >
                   {(allocationData.length > 0 ? allocationData : [{ name: "No Data", value: 1, color: "#374151" }]).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -387,7 +347,8 @@ export function InvestmentsView() {
                     borderRadius: "8px",
                     color: "oklch(0.98 0 0)",
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  itemStyle={{ color: "oklch(0.98 0 0)" }}
+                  formatter={(value: number, name: string) => [formatCurrency(value), name]}
                 />
               </PieChart>
             </ResponsiveContainer>

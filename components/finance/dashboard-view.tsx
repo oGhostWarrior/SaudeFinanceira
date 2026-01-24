@@ -173,7 +173,7 @@ export function DashboardView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `k`}
+                  tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -218,7 +218,7 @@ export function DashboardView() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "oklch(0.65 0 0)", fontSize: 12 }}
-                  tickFormatter={(v) => `k`}
+                  tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`}
                 />
                 <Tooltip
                   contentStyle={{
@@ -263,6 +263,7 @@ export function DashboardView() {
                   outerRadius={70}
                   paddingAngle={2}
                   dataKey="value"
+                  nameKey="name"
                 >
                   {(expenseBreakdown.length > 0 ? expenseBreakdown : [{ name: "Sem Dados", value: 1, color: "#374151" }]).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -275,7 +276,8 @@ export function DashboardView() {
                     borderRadius: "8px",
                     color: "oklch(0.98 0 0)",
                   }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  itemStyle={{ color: "oklch(0.98 0 0)" }}
+                  formatter={(value: number, name: string) => [formatCurrency(value), name]}
                 />
               </PieChart>
             </ResponsiveContainer>
