@@ -23,10 +23,10 @@ interface SidebarProps {
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "credit-cards", label: "Credit Cards", icon: CreditCard },
-  { id: "expenses", label: "Expenses", icon: Receipt },
-  { id: "investments", label: "Investments", icon: TrendingUp },
-  { id: "income", label: "Income", icon: Wallet },
+  { id: "credit-cards", label: "Cartoes", icon: CreditCard },
+  { id: "expenses", label: "Dispesas", icon: Receipt },
+  { id: "investments", label: "Investimentos", icon: TrendingUp },
+  { id: "income", label: "Renda", icon: Wallet },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -50,10 +50,10 @@ export function Sidebar({
         {!isCollapsed && (
           <div className="flex flex-col">
             <span className="font-semibold text-sidebar-foreground">
-              WealthPulse
+              Saúde Financeira
             </span>
             <span className="text-xs text-muted-foreground">
-              Finance Manager
+              Controle de Finanças
             </span>
           </div>
         )}

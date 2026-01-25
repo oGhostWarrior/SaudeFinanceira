@@ -96,7 +96,7 @@ function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Add Income Source</DialogTitle>
+          <DialogTitle className="text-foreground">Adc Fonte de Renda</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -123,18 +123,18 @@ function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="annually">Annually</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="bi-weekly">Quinzenal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                  <SelectItem value="quarterly">Trimestral</SelectItem>
+                  <SelectItem value="annually">Anual</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">Quantia</Label>
               <Input id="amount" type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="5000" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
@@ -144,7 +144,7 @@ function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Add Income Source
+            Adc Fonte de Renda
           </Button>
         </form>
       </DialogContent>
@@ -243,9 +243,9 @@ export function IncomeView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Income</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Renda</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Track your active and passive income streams
+            Acompanhe seus fluxos de renda ativa e passiva.
           </p>
         </div>
         <AddIncomeDialog onSuccess={() => {}} />
@@ -254,7 +254,7 @@ export function IncomeView() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Monthly Income</p>
+            <p className="text-sm text-muted-foreground">Renda Mensal</p>
             <Wallet className="h-5 w-5 text-primary" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
@@ -263,13 +263,13 @@ export function IncomeView() {
           <div className="flex items-center gap-1 mt-2">
             <ArrowUpRight className="h-4 w-4 text-emerald-500" />
             <span className="text-sm font-medium text-emerald-500">+5.2%</span>
-            <span className="text-xs text-muted-foreground">vs last month</span>
+            <span className="text-xs text-muted-foreground">vs Ultimo Mes</span>
           </div>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Active Income</p>
+            <p className="text-sm text-muted-foreground">Renda Ativa</p>
             <Briefcase className="h-5 w-5 text-chart-2" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
@@ -282,34 +282,34 @@ export function IncomeView() {
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Passive Income</p>
+            <p className="text-sm text-muted-foreground">Renda Passiva</p>
             <PiggyBank className="h-5 w-5 text-emerald-500" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(totalPassive)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {passiveRatio}% of total income
+            {passiveRatio}% do total de renda
           </p>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Annual Projection</p>
+            <p className="text-sm text-muted-foreground">Projeção Anual</p>
             <TrendingUp className="h-5 w-5 text-yellow-500" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(annualProjection)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Based on current streams
+            Com base nos fluxos atuais
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Income History</h3>
+          <h3 className="font-medium text-card-foreground mb-4">Historico de Renda</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={incomeHistoryData}>
@@ -343,7 +343,7 @@ export function IncomeView() {
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Income Mix</h3>
+          <h3 className="font-medium text-card-foreground mb-4">Renda Mista</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -395,7 +395,7 @@ export function IncomeView() {
 
       {monthlyIncome > 0 && (
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">5-Month Projection</h3>
+          <h3 className="font-medium text-card-foreground mb-4">Prejeção em 5 Meses</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={projectionData}>
@@ -445,13 +445,13 @@ export function IncomeView() {
         <div className="rounded-xl bg-card border border-border overflow-hidden">
           <div className="p-5 border-b border-border flex items-center gap-2">
             <Briefcase className="h-5 w-5 text-chart-2" />
-            <h3 className="font-medium text-card-foreground">Active Income</h3>
+            <h3 className="font-medium text-card-foreground">Renda Ativa</h3>
           </div>
           <div className="p-5 space-y-3">
             {incomes.filter(i => i.type === "active").length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">No active income sources</p>
+                <p className="text-sm">Sem Fontes de Renda Ativa</p>
               </div>
             ) : (
               incomes.filter(i => i.type === "active").map((income) => (
@@ -508,13 +508,13 @@ export function IncomeView() {
         <div className="rounded-xl bg-card border border-border overflow-hidden">
           <div className="p-5 border-b border-border flex items-center gap-2">
             <PiggyBank className="h-5 w-5 text-emerald-500" />
-            <h3 className="font-medium text-card-foreground">Passive Income</h3>
+            <h3 className="font-medium text-card-foreground">Renda Passiva</h3>
           </div>
           <div className="p-5 space-y-3">
             {incomes.filter(i => i.type === "passive").length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <PiggyBank className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">No passive income sources</p>
+                <p className="text-sm">Sem Fontes de Renda Passiva</p>
               </div>
             ) : (
               incomes.filter(i => i.type === "passive").map((income) => (
@@ -547,7 +547,7 @@ export function IncomeView() {
                         {formatCurrency(Number(income.amount))}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        ~{formatCurrency(getMonthlyAmount(income))}/mo
+                        ~{formatCurrency(getMonthlyAmount(income))}/mes
                       </p>
                     </div>
                     <button

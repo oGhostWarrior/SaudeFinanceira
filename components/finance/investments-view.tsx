@@ -225,9 +225,9 @@ export function InvestmentsView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Investments</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Investimentos</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Track your portfolio performance and allocation
+            Acompanhe o desempenho e a alocação do seu portfólio.
           </p>
         </div>
         <AddInvestmentDialog onSuccess={() => {}} />
@@ -257,7 +257,7 @@ export function InvestmentsView() {
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Total Gain/Loss</p>
+            <p className="text-sm text-muted-foreground">Total Perdas/Ganhos</p>
             {totalGain >= 0 ? (
               <TrendingUp className="h-5 w-5 text-emerald-500" />
             ) : (
@@ -274,27 +274,27 @@ export function InvestmentsView() {
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Traditional Assets</p>
+            <p className="text-sm text-muted-foreground">Ativos tradicionais</p>
             <BarChart3 className="h-5 w-5 text-chart-2" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(traditionalValue)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {totalValue > 0 ? ((traditionalValue / totalValue) * 100).toFixed(1) : 0}% of portfolio
+            {totalValue > 0 ? ((traditionalValue / totalValue) * 100).toFixed(1) : 0}% do portfolio
           </p>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Cryptocurrency</p>
+            <p className="text-sm text-muted-foreground">Criptomoedas</p>
             <Bitcoin className="h-5 w-5 text-chart-5" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(cryptoValue)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {totalValue > 0 ? ((cryptoValue / totalValue) * 100).toFixed(1) : 0}% of portfolio
+            {totalValue > 0 ? ((cryptoValue / totalValue) * 100).toFixed(1) : 0}% do portfolio
           </p>
         </div>
       </div>
@@ -322,7 +322,7 @@ export function InvestmentsView() {
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Asset Allocation</h3>
+          <h3 className="font-medium text-card-foreground mb-4">Alocação de ativos</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -382,11 +382,11 @@ export function InvestmentsView() {
               onChange={(e) => setFilter(e.target.value)}
               className="bg-secondary border-0 text-sm text-foreground rounded-md px-3 py-1.5 focus:ring-2 focus:ring-primary"
             >
-              <option value="all">All Assets</option>
-              <option value="stock">Stocks</option>
+              <option value="all">Todos Ativos</option>
+              <option value="stock">Açoes</option>
               <option value="etf">ETFs</option>
               <option value="crypto">Crypto</option>
-              <option value="bond">Bonds</option>
+              <option value="bond">Titulos</option>
             </select>
           </div>
         </div>
@@ -415,12 +415,12 @@ export function InvestmentsView() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Asset</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Quantity</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Avg Cost</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Current Price</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Value</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Gain/Loss</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Ativo</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Quantidade</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Custo Medio</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Preço Atual</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Perdas/Ganhos</th>
                   <th className="text-right p-4 text-sm font-medium text-muted-foreground" />
                 </tr>
               </thead>
