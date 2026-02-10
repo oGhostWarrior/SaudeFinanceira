@@ -77,7 +77,7 @@ export interface IncomeSource {
   id: string;
   user_id: string;
   name: string;
-  type: 'active' | 'passive';
+  type: 'active' | 'passive' | 'alternative';
   amount: number;
   frequency: 'weekly' | 'bi-weekly' | 'monthly' | 'quarterly' | 'annually';
   source: string;
@@ -119,6 +119,7 @@ export interface IncomeChartData {
   month: string;
   active: number;
   passive: number;
+  alternative: number;
 }
 
 export interface InvestmentChartData {

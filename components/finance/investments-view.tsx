@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useInvestments, useFinancialSummary } from "@/hooks/use-finance-data";
 import { useCurrencyFormatter } from "@/hooks/use-currency-formatter";
+import { useLanguage } from "@/components/providers/language-provider";
 import { createInvestment, deleteInvestment, updateInvestment, updateCryptoPrices } from "@/lib/actions/finance-actions";
 import type { Investment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -44,16 +45,17 @@ import {
 } from "recharts";
 import { mutate } from "swr";
 
-const typeConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  stock: { icon: <BarChart3 className="h-4 w-4" />, color: "#3b82f6", label: "Stocks" },
-  etf: { icon: <Layers className="h-4 w-4" />, color: "#10b981", label: "ETFs" },
-  bond: { icon: <Landmark className="h-4 w-4" />, color: "#f59e0b", label: "Bonds" },
-  mutual_fund: { icon: <Building2 className="h-4 w-4" />, color: "#8b5cf6", label: "Mutual Funds" },
-  crypto: { icon: <Bitcoin className="h-4 w-4" />, color: "#f97316", label: "Crypto" },
-  real_estate: { icon: <Building2 className="h-4 w-4" />, color: "#06b6d4", label: "Real Estate" },
-};
+const getTypeConfig = (t: any): Record<string, { icon: React.ReactNode; color: string; label: string }> => ({
+  stock: { icon: <BarChart3 className="h-4 w-4" />, color: "#3b82f6", label: t("investments.types.stock") },
+  etf: { icon: <Layers className="h-4 w-4" />, color: "#10b981", label: t("investments.types.etf") },
+  bond: { icon: <Landmark className="h-4 w-4" />, color: "#f59e0b", label: t("investments.types.bond") },
+  mutual_fund: { icon: <Building2 className="h-4 w-4" />, color: "#8b5cf6", label: t("investments.types.mutual_fund") },
+  crypto: { icon: <Bitcoin className="h-4 w-4" />, color: "#f97316", label: t("investments.types.crypto") },
+  real_estate: { icon: <Building2 className="h-4 w-4" />, color: "#06b6d4", label: t("investments.types.real_estate") },
+});
 
 function AddInvestmentDialog({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -96,61 +98,61 @@ function AddInvestmentDialog({ onSuccess }: { onSuccess: () => void }) {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Investment
+          {t("investments.addInvestment")}
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Add Investment</DialogTitle>
+          <DialogTitle className="text-foreground">{t("investments.addDialog.title")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Apple Inc." required className="bg-input border-border" />
+              <Label htmlFor="name">{t("investments.addDialog.name")}</Label>
+              <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("investments.addDialog.namePlaceholder")} required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="symbol">Symbol</Label>
-              <Input id="symbol" value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })} placeholder="AAPL" className="bg-input border-border" />
+              <Label htmlFor="symbol">{t("investments.addDialog.symbol")}</Label>
+              <Input id="symbol" value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })} placeholder={t("investments.addDialog.symbolPlaceholder")} className="bg-input border-border" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Type</Label>
+            <Label>{t("investments.addDialog.type")}</Label>
             <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value as Investment["type"] })}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="stock">Stock</SelectItem>
-                <SelectItem value="etf">ETF</SelectItem>
-                <SelectItem value="crypto">Cryptocurrency</SelectItem>
-                <SelectItem value="bond">Bond</SelectItem>
-                <SelectItem value="mutual_fund">Mutual Fund</SelectItem>
-                <SelectItem value="real_estate">Real Estate</SelectItem>
+                <SelectItem value="stock">{t("investments.types.stock")}</SelectItem>
+                <SelectItem value="etf">{t("investments.types.etf")}</SelectItem>
+                <SelectItem value="crypto">{t("investments.types.crypto")}</SelectItem>
+                <SelectItem value="bond">{t("investments.types.bond")}</SelectItem>
+                <SelectItem value="mutual_fund">{t("investments.types.mutual_fund")}</SelectItem>
+                <SelectItem value="real_estate">{t("investments.types.real_estate")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity</Label>
+              <Label htmlFor="quantity">{t("investments.addDialog.quantity")}</Label>
               <Input id="quantity" type="number" step="any" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder="10" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="purchasePrice">Purchase Price</Label>
+              <Label htmlFor="purchasePrice">{t("investments.addDialog.purchasePrice")}</Label>
               <Input id="purchasePrice" type="number" step="0.01" value={form.purchase_price} onChange={(e) => setForm({ ...form, purchase_price: e.target.value })} placeholder="150.00" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currentPrice">Current Price</Label>
+              <Label htmlFor="currentPrice">{t("investments.addDialog.currentPrice")}</Label>
               <Input id="currentPrice" type="number" step="0.01" value={form.current_price} onChange={(e) => setForm({ ...form, current_price: e.target.value })} placeholder="175.00" required className="bg-input border-border" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="date">Purchase Date</Label>
+            <Label htmlFor="date">{t("investments.addDialog.purchaseDate")}</Label>
             <Input id="date" type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} className="bg-input border-border" />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Add Investment
+            {t("investments.addDialog.save")}
           </Button>
         </form>
       </DialogContent>
@@ -163,7 +165,9 @@ export function InvestmentsView() {
   const { data: investments, isLoading: invLoading } = useInvestments();
   const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
   const [isUpdating, setIsUpdating] = useState(false);
+  const { t } = useLanguage();
   const { formatCurrency } = useCurrencyFormatter();
+  const typeConfig = getTypeConfig(t);
   const isLoading = invLoading || summaryLoading;
 
   const portfolioHistoryData = summary?.investmentChartData || [];
@@ -174,9 +178,9 @@ export function InvestmentsView() {
       await updateCryptoPrices();
       await mutate("investments");
       await mutate("financial-summary");
-      toast.success("Cotações atualizadas com sucesso!");
+      toast.success(t("investments.messages.updateSuccess"));
     } catch (error) {
-      toast.error("Erro ao atualizar cotações.");
+      toast.error(t("investments.messages.updateError"));
     } finally {
       setIsUpdating(false);
     }
@@ -192,8 +196,8 @@ export function InvestmentsView() {
   const totalGain = totalValue - totalCost;
   const gainPercent = totalCost > 0 ? ((totalGain / totalCost) * 100).toFixed(2) : "0";
 
-  const filteredInvestments = filter === "all" 
-    ? investmentsList 
+  const filteredInvestments = filter === "all"
+    ? investmentsList
     : investmentsList.filter(inv => inv.type === filter);
 
   // Group by type for pie chart
@@ -225,18 +229,18 @@ export function InvestmentsView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Investimentos</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t("investments.title")}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Acompanhe o desempenho e a alocação do seu portfólio.
+            {t("investments.subtitle")}
           </p>
         </div>
-        <AddInvestmentDialog onSuccess={() => {}} />
+        <AddInvestmentDialog onSuccess={() => { }} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Total Portfolio</p>
+            <p className="text-sm text-muted-foreground">{t("investments.totalPortfolio")}</p>
             <DollarSign className="h-5 w-5 text-primary" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
@@ -251,13 +255,13 @@ export function InvestmentsView() {
             <span className={cn("text-sm font-medium", Number(gainPercent) >= 0 ? "text-emerald-500" : "text-destructive")}>
               {gainPercent}%
             </span>
-            <span className="text-xs text-muted-foreground">all time</span>
+            <span className="text-xs text-muted-foreground">{t("investments.allTime")}</span>
           </div>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Total Perdas/Ganhos</p>
+            <p className="text-sm text-muted-foreground">{t("investments.totalLossGain")}</p>
             {totalGain >= 0 ? (
               <TrendingUp className="h-5 w-5 text-emerald-500" />
             ) : (
@@ -268,40 +272,40 @@ export function InvestmentsView() {
             {totalGain >= 0 ? "+" : ""}{formatCurrency(totalGain)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Cost basis: {formatCurrency(totalCost)}
+            {t("investments.costBasis")}: {formatCurrency(totalCost)}
           </p>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Ativos tradicionais</p>
+            <p className="text-sm text-muted-foreground">{t("investments.traditionalAssets")}</p>
             <BarChart3 className="h-5 w-5 text-chart-2" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(traditionalValue)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {totalValue > 0 ? ((traditionalValue / totalValue) * 100).toFixed(1) : 0}% do portfolio
+            {totalValue > 0 ? ((traditionalValue / totalValue) * 100).toFixed(1) : 0}% {t("investments.ofPortfolio")}
           </p>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Criptomoedas</p>
+            <p className="text-sm text-muted-foreground">{t("investments.cryptocurrencies")}</p>
             <Bitcoin className="h-5 w-5 text-chart-5" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(cryptoValue)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {totalValue > 0 ? ((cryptoValue / totalValue) * 100).toFixed(1) : 0}% do portfolio
+            {totalValue > 0 ? ((cryptoValue / totalValue) * 100).toFixed(1) : 0}% {t("investments.ofPortfolio")}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Evolução do Valor Investido (Custo)</h3>
+          <h3 className="font-medium text-card-foreground mb-4">{t("investments.investedEvolution")}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={portfolioHistoryData}>
@@ -322,12 +326,12 @@ export function InvestmentsView() {
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Alocação de ativos</h3>
+          <h3 className="font-medium text-card-foreground mb-4">{t("investments.assetAllocation")}</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={allocationData.length > 0 ? allocationData : [{ name: "No Data", value: 1, color: "#374151" }]}
+                  data={allocationData.length > 0 ? allocationData : [{ name: t("common.noData"), value: 1, color: "#374151" }]}
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
@@ -336,7 +340,7 @@ export function InvestmentsView() {
                   dataKey="value"
                   nameKey="name"
                 >
-                  {(allocationData.length > 0 ? allocationData : [{ name: "No Data", value: 1, color: "#374151" }]).map((entry, index) => (
+                  {(allocationData.length > 0 ? allocationData : [{ name: t("common.noData"), value: 1, color: "#374151" }]).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -374,7 +378,7 @@ export function InvestmentsView() {
 
       <div className="rounded-xl bg-card border border-border overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-border">
-          <h3 className="font-medium text-card-foreground">Holdings</h3>
+          <h3 className="font-medium text-card-foreground">{t("investments.holdings")}</h3>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
             <select
@@ -382,45 +386,45 @@ export function InvestmentsView() {
               onChange={(e) => setFilter(e.target.value)}
               className="bg-secondary border-0 text-sm text-foreground rounded-md px-3 py-1.5 focus:ring-2 focus:ring-primary"
             >
-              <option value="all">Todos Ativos</option>
-              <option value="stock">Açoes</option>
-              <option value="etf">ETFs</option>
-              <option value="crypto">Crypto</option>
-              <option value="bond">Titulos</option>
+              <option value="all">{t("investments.allAssets")}</option>
+              <option value="stock">{t("investments.types.stock")}</option>
+              <option value="etf">{t("investments.types.etf")}</option>
+              <option value="crypto">{t("investments.types.crypto")}</option>
+              <option value="bond">{t("investments.types.bond")}</option>
             </select>
           </div>
         </div>
         <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleUpdatePrices} 
-              disabled={isUpdating}
-              className="gap-2"
-            >
-              <RefreshCw className={cn("h-4 w-4", isUpdating && "animate-spin")} />
-              {isUpdating ? "Atualizando..." : "Atualizar Cotações"}
-            </Button>
+          <Button
+            variant="outline"
+            onClick={handleUpdatePrices}
+            disabled={isUpdating}
+            className="gap-2"
+          >
+            <RefreshCw className={cn("h-4 w-4", isUpdating && "animate-spin")} />
+            {isUpdating ? t("investments.updating") : t("investments.updatePrices")}
+          </Button>
 
-            <AddInvestmentDialog onSuccess={() => {}} />
-          </div>
+          <AddInvestmentDialog onSuccess={() => { }} />
+        </div>
 
         {filteredInvestments.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
             <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No investments yet</p>
-            <p className="text-sm mt-1">Add your first investment to start tracking your portfolio</p>
+            <p>{t("investments.noInvestments")}</p>
+            <p className="text-sm mt-1">{t("investments.noInvestmentsDesc")}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Ativo</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Quantidade</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Custo Medio</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Preço Atual</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Perdas/Ganhos</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">{t("investments.table.asset")}</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t("investments.table.quantity")}</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t("investments.table.avgCost")}</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t("investments.table.currentPrice")}</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t("investments.table.value")}</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">{t("investments.table.lossGain")}</th>
                   <th className="text-right p-4 text-sm font-medium text-muted-foreground" />
                 </tr>
               </thead>
@@ -476,7 +480,11 @@ export function InvestmentsView() {
                       <td className="p-4 text-right">
                         <button
                           type="button"
-                          onClick={() => handleDelete(inv.id)}
+                          onClick={() => {
+                            if (confirm(t("investments.messages.deleteConfirm"))) {
+                              handleDelete(inv.id);
+                            }
+                          }}
                           className="p-1.5 rounded text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
                         >
                           <Trash2 className="h-4 w-4" />

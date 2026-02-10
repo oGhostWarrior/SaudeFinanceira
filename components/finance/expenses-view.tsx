@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useFixedExpenses, useExtraExpenses, useFinancialSummary } from "@/hooks/use-finance-data"; // Importar useFinancialSummary
 import { useCurrencyFormatter } from "@/hooks/use-currency-formatter";
+import { useLanguage } from "@/components/providers/language-provider";
 import { createFixedExpense, createExtraExpense, updateFixedExpense, deleteFixedExpense, deleteExtraExpense } from "@/lib/actions/finance-actions";
 import type { FixedExpense, ExtraExpense } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ const extraCategoryIcons: Record<string, React.ReactNode> = {
 };
 
 function AddFixedExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -97,46 +99,46 @@ function AddFixedExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Fixed Expense
+          {t("expenses.addFixed")}
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Add Fixed Expense</DialogTitle>
+          <DialogTitle className="text-foreground">{t("expenses.addFixedDialog.title")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Rent, Netflix, etc." required className="bg-input border-border" />
+            <Label htmlFor="name">{t("expenses.addFixedDialog.name")}</Label>
+            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("expenses.addFixedDialog.namePlaceholder")} required className="bg-input border-border" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">{t("expenses.addFixedDialog.amount")}</Label>
               <Input id="amount" type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="100.00" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due">Due Day</Label>
+              <Label htmlFor="due">{t("expenses.addFixedDialog.dueDay")}</Label>
               <Input id="due" type="number" min="1" max="31" value={form.due_day} onChange={(e) => setForm({ ...form, due_day: e.target.value })} className="bg-input border-border" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>{t("expenses.addFixedDialog.category")}</Label>
             <Select value={form.category} onValueChange={(value) => setForm({ ...form, category: value as FixedExpense["category"] })}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rent">Rent</SelectItem>
-                <SelectItem value="utilities">Utilities</SelectItem>
-                <SelectItem value="insurance">Insurance</SelectItem>
-                <SelectItem value="subscriptions">Subscriptions</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="rent">{t("expenses.categories.rent")}</SelectItem>
+                <SelectItem value="utilities">{t("expenses.categories.utilities")}</SelectItem>
+                <SelectItem value="insurance">{t("expenses.categories.insurance")}</SelectItem>
+                <SelectItem value="subscriptions">{t("expenses.categories.subscriptions")}</SelectItem>
+                <SelectItem value="other">{t("expenses.categories.other")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Add Expense
+            {t("expenses.addFixedDialog.save")}
           </Button>
         </form>
       </DialogContent>
@@ -145,6 +147,7 @@ function AddFixedExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
 }
 
 function AddExtraExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -181,46 +184,46 @@ function AddExtraExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2 bg-transparent">
           <Plus className="h-4 w-4" />
-          Add Extra Expense
+          {t("expenses.addExtra")}
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Add Extra Expense</DialogTitle>
+          <DialogTitle className="text-foreground">{t("expenses.addExtraDialog.title")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="desc">Description</Label>
-            <Input id="desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Birthday gift, Car repair, etc." required className="bg-input border-border" />
+            <Label htmlFor="desc">{t("expenses.addExtraDialog.description")}</Label>
+            <Input id="desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t("expenses.addExtraDialog.descPlaceholder")} required className="bg-input border-border" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">{t("expenses.addExtraDialog.amount")}</Label>
               <Input id="amount" type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="50.00" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">{t("expenses.addExtraDialog.date")}</Label>
               <Input id="date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-input border-border" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>{t("expenses.addExtraDialog.category")}</Label>
             <Select value={form.category} onValueChange={(value) => setForm({ ...form, category: value })}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Shopping">Shopping</SelectItem>
-                <SelectItem value="Gifts">Gifts</SelectItem>
-                <SelectItem value="Maintenance">Maintenance</SelectItem>
-                <SelectItem value="Healthcare">Healthcare</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="Shopping">{t("expenses.categories.shopping")}</SelectItem>
+                <SelectItem value="Gifts">{t("expenses.categories.gifts")}</SelectItem>
+                <SelectItem value="Maintenance">{t("expenses.categories.maintenance")}</SelectItem>
+                <SelectItem value="Healthcare">{t("expenses.categories.health")}</SelectItem>
+                <SelectItem value="Other">{t("expenses.categories.other")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Add Expense
+            {t("expenses.addExtraDialog.save")}
           </Button>
         </form>
       </DialogContent>
@@ -229,13 +232,20 @@ function AddExtraExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function ExpensesView() {
+  const { t, language: lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<"fixed" | "extra">("fixed");
-  
+
   // Hooks de dados
   const { data: fixedExpenses, isLoading: fixedLoading } = useFixedExpenses();
   const { data: extraExpenses, isLoading: extraLoading } = useExtraExpenses();
   const { data: summary, isLoading: summaryLoading } = useFinancialSummary(); // Novo hook
-  const { formatCurrency } = useCurrencyFormatter();
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat(lang, {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+    }).format(value);
 
   const isLoading = fixedLoading || extraLoading || summaryLoading;
 
@@ -276,7 +286,7 @@ export function ExpensesView() {
   }, {} as Record<string, { total: number; items: FixedExpense[] }>);
 
   const pieData = Object.entries(expensesByCategory).map(([category, data]) => ({
-    name: category.charAt(0).toUpperCase() + category.slice(1),
+    name: t(`expenses.categories.${category}` as any),
     value: data.total,
     color: categoryConfig[category]?.color || "#6b7280",
   })).filter(item => item.value > 0);
@@ -287,16 +297,16 @@ export function ExpensesView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Despesas</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t("expenses.title")}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-             Acompanhe despesas fixas e gastos extras
+            {t("expenses.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
           {/* @ts-ignore */}
-          <AddExtraExpenseDialog onSuccess={() => {}} />
+          <AddExtraExpenseDialog onSuccess={() => { }} />
           {/* @ts-ignore */}
-          <AddFixedExpenseDialog onSuccess={() => {}} />
+          <AddFixedExpenseDialog onSuccess={() => { }} />
         </div>
       </div>
 
@@ -307,7 +317,7 @@ export function ExpensesView() {
               <Calendar className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Mensal Fixo</p>
+              <p className="text-sm text-muted-foreground">{t("expenses.fixedMonthly")}</p>
               <p className="text-xl font-semibold text-foreground">
                 {formatCurrency(totalFixed)}
               </p>
@@ -320,7 +330,7 @@ export function ExpensesView() {
               <DollarSign className="h-5 w-5 text-yellow-500" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Extras (Mês)</p>
+              <p className="text-sm text-muted-foreground">{t("expenses.extraMonthly")}</p>
               <p className="text-xl font-semibold text-foreground">
                 {formatCurrency(totalExtra)}
               </p>
@@ -333,7 +343,7 @@ export function ExpensesView() {
               <DollarSign className="h-5 w-5 text-destructive" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Despesas</p>
+              <p className="text-sm text-muted-foreground">{t("expenses.totalExpenses")}</p>
               <p className="text-xl font-semibold text-foreground">
                 {formatCurrency(totalFixed + totalExtra)}
               </p>
@@ -344,12 +354,12 @@ export function ExpensesView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Por Categoria</h3>
+          <h3 className="font-medium text-card-foreground mb-4">{t("expenses.byCategory")}</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={pieData.length > 0 ? pieData : [{ name: "Sem Dados", value: 1, color: "#374151" }]}
+                  data={pieData.length > 0 ? pieData : [{ name: t("common.noData"), value: 1, color: "#374151" }]}
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
@@ -358,7 +368,7 @@ export function ExpensesView() {
                   dataKey="value"
                   nameKey="name"
                 >
-                  {(pieData.length > 0 ? pieData : [{ name: "Sem Dados", value: 1, color: "#374151" }]).map((entry, index) => (
+                  {(pieData.length > 0 ? pieData : [{ name: t("common.noData"), value: 1, color: "#374151" }]).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -392,7 +402,7 @@ export function ExpensesView() {
         </div>
 
         <div className="lg:col-span-2 rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Tendência Mensal</h3>
+          <h3 className="font-medium text-card-foreground mb-4">{t("expenses.monthlyTrend")}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyTrendData}>
@@ -422,8 +432,8 @@ export function ExpensesView() {
                   }}
                   formatter={(value: number) => formatCurrency(value)}
                 />
-                <Bar dataKey="fixed" name="Fixas" stackId="a" fill="oklch(0.72 0.19 160)" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="extra" name="Extras" stackId="a" fill="oklch(0.75 0.15 80)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="fixed" name={t("dashboard.charts.expenses")} stackId="a" fill="oklch(0.72 0.19 160)" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="extra" name={t("dashboard.charts.expenseBreakdown")} stackId="a" fill="oklch(0.75 0.15 80)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -442,7 +452,7 @@ export function ExpensesView() {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            Fixed Expenses ({expenses.filter(e => e.is_active).length})
+            {t("expenses.fixedTab")} ({expenses.filter(e => e.is_active).length})
           </button>
           <button
             type="button"
@@ -454,7 +464,7 @@ export function ExpensesView() {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            Extra Expenses ({extras.length})
+            {t("expenses.extraTab")} ({extras.length})
           </button>
         </div>
 
@@ -463,8 +473,8 @@ export function ExpensesView() {
             expenses.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No fixed expenses yet</p>
-                <p className="text-sm mt-1">Add your recurring expenses to track them</p>
+                <p>{t("expenses.noFixedExpenses")}</p>
+                <p className="text-sm mt-1">{t("expenses.noFixedDesc")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -490,11 +500,11 @@ export function ExpensesView() {
                         <div>
                           <p className="font-medium text-foreground">{expense.name}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="secondary" className="text-xs capitalize">
-                              {expense.category}
+                            <Badge variant="secondary" className="text-xs">
+                              {t(`expenses.categories.${expense.category}` as any)}
                             </Badge>
                             <span className="text-xs text-muted-foreground">
-                              Due on day {expense.due_day}
+                              {t("expenses.dueOnDay")} {expense.due_day}
                             </span>
                           </div>
                         </div>
@@ -523,8 +533,8 @@ export function ExpensesView() {
           ) : extras.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No extra expenses yet</p>
-              <p className="text-sm mt-1">Add one-time or occasional expenses here</p>
+              <p>{t("expenses.noExtraExpenses")}</p>
+              <p className="text-sm mt-1">{t("expenses.noExtraDesc")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -541,10 +551,10 @@ export function ExpensesView() {
                       <p className="font-medium text-foreground">{expense.description}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <Badge variant="secondary" className="text-xs">
-                          {expense.category}
+                          {t(`expenses.categories.${expense.category.toLowerCase()}` as any)}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(expense.expense_date).toLocaleDateString()}
+                          {new Date(expense.expense_date).toLocaleDateString(lang === "en-US" ? "en-US" : "pt-BR")}
                         </span>
                       </div>
                     </div>

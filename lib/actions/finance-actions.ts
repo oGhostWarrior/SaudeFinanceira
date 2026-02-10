@@ -37,13 +37,13 @@ async function getCurrentUser() {
 export async function getProfile(): Promise<Profile | null> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
-  
+
   if (error) return null;
   return data;
 }
@@ -51,14 +51,14 @@ export async function getProfile(): Promise<Profile | null> {
 export async function updateProfile(updates: Partial<Profile>): Promise<Profile | null> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("profiles")
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", user.id)
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -68,7 +68,7 @@ export async function updateProfile(updates: Partial<Profile>): Promise<Profile 
 export async function getCreditCards(): Promise<CreditCard[]> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("credit_cards")
     .select(`
@@ -77,7 +77,7 @@ export async function getCreditCards(): Promise<CreditCard[]> {
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
-  
+
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -85,13 +85,13 @@ export async function getCreditCards(): Promise<CreditCard[]> {
 export async function createCreditCard(card: CreditCardInput): Promise<CreditCard> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("credit_cards")
     .insert({ ...card, user_id: user.id })
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -100,7 +100,7 @@ export async function createCreditCard(card: CreditCardInput): Promise<CreditCar
 export async function updateCreditCard(id: string, updates: Partial<CreditCardInput>): Promise<CreditCard> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("credit_cards")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -108,7 +108,7 @@ export async function updateCreditCard(id: string, updates: Partial<CreditCardIn
     .eq("user_id", user.id)
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -117,13 +117,13 @@ export async function updateCreditCard(id: string, updates: Partial<CreditCardIn
 export async function deleteCreditCard(id: string): Promise<void> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { error } = await supabase
     .from("credit_cards")
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
 }
@@ -132,17 +132,17 @@ export async function deleteCreditCard(id: string): Promise<void> {
 export async function getCardPurchases(cardId?: string): Promise<CardPurchase[]> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   let query = supabase
     .from("card_purchases")
     .select("*")
     .eq("user_id", user.id)
     .order("date", { ascending: false });
-  
+
   if (cardId) {
     query = query.eq("card_id", cardId);
   }
-  
+
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data || [];
@@ -151,14 +151,14 @@ export async function getCardPurchases(cardId?: string): Promise<CardPurchase[]>
 export async function createCardPurchase(purchase: CardPurchaseInput): Promise<CardPurchase> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   // 1. Inserir a compra
   const { data: newPurchase, error } = await supabase
     .from("card_purchases")
     .insert({ ...purchase, user_id: user.id })
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
 
   // 2. Atualizar o saldo do cartão (Limite Usado)
@@ -170,7 +170,7 @@ export async function createCardPurchase(purchase: CardPurchaseInput): Promise<C
 
   if (!cardError && card) {
     const newBalance = Number(card.current_balance) + Number(purchase.amount);
-    
+
     await supabase
       .from("credit_cards")
       .update({ current_balance: newBalance })
@@ -184,7 +184,7 @@ export async function createCardPurchase(purchase: CardPurchaseInput): Promise<C
 export async function deleteCardPurchase(id: string): Promise<void> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   // 1. Buscar a compra antes de deletar
   const { data: purchase, error: fetchError } = await supabase
     .from("card_purchases")
@@ -201,7 +201,7 @@ export async function deleteCardPurchase(id: string): Promise<void> {
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  
+
   if (error) throw new Error(error.message);
 
   // 3. Atualizar o saldo do cartão (Libera o limite total)
@@ -213,7 +213,7 @@ export async function deleteCardPurchase(id: string): Promise<void> {
 
   if (!cardError && card) {
     const newBalance = Number(card.current_balance) - Number(purchase.amount);
-    
+
     await supabase
       .from("credit_cards")
       .update({ current_balance: newBalance })
@@ -227,13 +227,13 @@ export async function deleteCardPurchase(id: string): Promise<void> {
 export async function getFixedExpenses(): Promise<FixedExpense[]> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("fixed_expenses")
     .select("*")
     .eq("user_id", user.id)
     .order("due_day", { ascending: true });
-  
+
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -241,13 +241,13 @@ export async function getFixedExpenses(): Promise<FixedExpense[]> {
 export async function createFixedExpense(expense: FixedExpenseInput): Promise<FixedExpense> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("fixed_expenses")
     .insert({ ...expense, user_id: user.id })
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -256,7 +256,7 @@ export async function createFixedExpense(expense: FixedExpenseInput): Promise<Fi
 export async function updateFixedExpense(id: string, updates: Partial<FixedExpenseInput>): Promise<FixedExpense> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("fixed_expenses")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -264,7 +264,7 @@ export async function updateFixedExpense(id: string, updates: Partial<FixedExpen
     .eq("user_id", user.id)
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -273,13 +273,13 @@ export async function updateFixedExpense(id: string, updates: Partial<FixedExpen
 export async function deleteFixedExpense(id: string): Promise<void> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { error } = await supabase
     .from("fixed_expenses")
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
 }
@@ -288,13 +288,13 @@ export async function deleteFixedExpense(id: string): Promise<void> {
 export async function getExtraExpenses(): Promise<ExtraExpense[]> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("extra_expenses")
     .select("*")
     .eq("user_id", user.id)
     .order("expense_date", { ascending: false });
-  
+
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -302,13 +302,13 @@ export async function getExtraExpenses(): Promise<ExtraExpense[]> {
 export async function createExtraExpense(expense: ExtraExpenseInput): Promise<ExtraExpense> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("extra_expenses")
     .insert({ ...expense, user_id: user.id })
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -317,13 +317,13 @@ export async function createExtraExpense(expense: ExtraExpenseInput): Promise<Ex
 export async function deleteExtraExpense(id: string): Promise<void> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { error } = await supabase
     .from("extra_expenses")
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
 }
@@ -332,13 +332,13 @@ export async function deleteExtraExpense(id: string): Promise<void> {
 export async function getInvestments(): Promise<Investment[]> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("investments")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
-  
+
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -346,13 +346,13 @@ export async function getInvestments(): Promise<Investment[]> {
 export async function createInvestment(investment: InvestmentInput): Promise<Investment> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("investments")
     .insert({ ...investment, user_id: user.id })
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -361,7 +361,7 @@ export async function createInvestment(investment: InvestmentInput): Promise<Inv
 export async function updateInvestment(id: string, updates: Partial<InvestmentInput>): Promise<Investment> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("investments")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -369,7 +369,7 @@ export async function updateInvestment(id: string, updates: Partial<InvestmentIn
     .eq("user_id", user.id)
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -378,13 +378,13 @@ export async function updateInvestment(id: string, updates: Partial<InvestmentIn
 export async function deleteInvestment(id: string): Promise<void> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { error } = await supabase
     .from("investments")
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
 }
@@ -404,10 +404,10 @@ export async function updateCryptoPrices(): Promise<void> {
   //Obter a cotação base: USDT -> BRL
   let usdtBrlPrice = 0;
   try {
-    const response = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL", { 
+    const response = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL", {
       next: { revalidate: 60 }
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       usdtBrlPrice = Number(data.price);
@@ -423,17 +423,17 @@ export async function updateCryptoPrices(): Promise<void> {
   const updatePromises = investments.map(async (inv) => {
     if (!inv.symbol) return;
     const symbol = inv.symbol.toUpperCase();
-    
+
     let finalPriceBrl = 0;
     if (symbol === "USDT") {
       finalPriceBrl = usdtBrlPrice;
     } else {
-      const pair = `${symbol}USDT`; 
+      const pair = `${symbol}USDT`;
       try {
         const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${pair}`, {
           next: { revalidate: 60 }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           const priceInUsdt = Number(data.price);
@@ -442,10 +442,10 @@ export async function updateCryptoPrices(): Promise<void> {
           const pairBrl = `${symbol}BRL`;
           const responseBrl = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${pairBrl}`, { next: { revalidate: 60 } });
           if (responseBrl.ok) {
-             const dataBrl = await responseBrl.json();
-             finalPriceBrl = Number(dataBrl.price);
+            const dataBrl = await responseBrl.json();
+            finalPriceBrl = Number(dataBrl.price);
           } else {
-             console.warn(`Par ${pair} (e fallback BRL) não encontrado na Binance.`);
+            console.warn(`Par ${pair} (e fallback BRL) não encontrado na Binance.`);
           }
         }
       } catch (e) {
@@ -456,7 +456,7 @@ export async function updateCryptoPrices(): Promise<void> {
     if (finalPriceBrl > 0) {
       await supabase
         .from("investments")
-        .update({ 
+        .update({
           current_price: finalPriceBrl,
           updated_at: new Date().toISOString()
         })
@@ -472,13 +472,13 @@ export async function updateCryptoPrices(): Promise<void> {
 export async function getIncomeSources(): Promise<IncomeSource[]> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("income_sources")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
-  
+
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -487,18 +487,18 @@ export async function createIncomeSource(source: IncomeSourceInput): Promise<Inc
   try {
     const user = await getCurrentUser();
     const supabase = await createClient();
-    
+
     const { data, error } = await supabase
       .from("income_sources")
       .insert({ ...source, user_id: user.id })
       .select()
       .single();
-    
+
     if (error) {
       console.error("Erro Supabase:", error.message);
       throw new Error(error.message);
     }
-    
+
     revalidatePath("/");
     return data;
   } catch (err: any) {
@@ -510,7 +510,7 @@ export async function createIncomeSource(source: IncomeSourceInput): Promise<Inc
 export async function updateIncomeSource(id: string, updates: Partial<IncomeSourceInput>): Promise<IncomeSource> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("income_sources")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -518,7 +518,7 @@ export async function updateIncomeSource(id: string, updates: Partial<IncomeSour
     .eq("user_id", user.id)
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -527,13 +527,13 @@ export async function updateIncomeSource(id: string, updates: Partial<IncomeSour
 export async function deleteIncomeSource(id: string): Promise<void> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { error } = await supabase
     .from("income_sources")
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
 }
@@ -542,17 +542,17 @@ export async function deleteIncomeSource(id: string): Promise<void> {
 export async function getIncomeHistory(sourceId?: string): Promise<IncomeHistory[]> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   let query = supabase
     .from("income_history")
     .select("*")
     .eq("user_id", user.id)
     .order("date", { ascending: false });
-  
+
   if (sourceId) {
     query = query.eq("income_source_id", sourceId);
   }
-  
+
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data || [];
@@ -561,13 +561,13 @@ export async function getIncomeHistory(sourceId?: string): Promise<IncomeHistory
 export async function createIncomeHistory(history: Omit<IncomeHistory, 'id' | 'user_id' | 'created_at'>): Promise<IncomeHistory> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase
     .from("income_history")
     .insert({ ...history, user_id: user.id })
     .select()
     .single();
-  
+
   if (error) throw new Error(error.message);
   revalidatePath("/");
   return data;
@@ -577,7 +577,7 @@ export async function createIncomeHistory(history: Omit<IncomeHistory, 'id' | 'u
 export async function getFinancialSummary(): Promise<FinancialSummary> {
   const user = await getCurrentUser();
   const supabase = await createClient();
-  
+
   // Datas para filtro
   const today = new Date();
   const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1).toISOString();
@@ -602,7 +602,7 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   // --- CÁLCULOS TOTAIS (SNAPSHOT ATUAL) ---
   const totalCreditCardDebt = cards?.reduce((sum, c) => sum + Number(c.current_balance), 0) || 0;
   const totalCreditLimit = cards?.reduce((sum, c) => sum + Number(c.credit_limit), 0) || 0;
-  
+
   // Fatura mensal atual (parcelas + à vista do mês)
   let currentMonthlyCardBill = 0;
   cards?.forEach(card => {
@@ -621,22 +621,22 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   const monthlyFixedExpenses = fixedExpenses
     ?.filter(e => e.is_active)
     .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-  
+
   const currentMonthStr = today.toISOString().slice(0, 7);
   const monthlyExtraExpenses = extraExpenses
     ?.filter(e => e.expense_date.startsWith(currentMonthStr))
     .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-  
-  const totalInvestmentValue = investments?.reduce((sum, i) => 
+
+  const totalInvestmentValue = investments?.reduce((sum, i) =>
     sum + (Number(i.quantity) * Number(i.current_price)), 0) || 0;
-  
-  const totalInvestmentCost = investments?.reduce((sum, i) => 
+
+  const totalInvestmentCost = investments?.reduce((sum, i) =>
     sum + (Number(i.quantity) * Number(i.purchase_price)), 0) || 0;
 
   const frequencyMultiplier: Record<string, number> = {
     'weekly': 4.33, 'bi-weekly': 2.17, 'monthly': 1, 'quarterly': 0.33, 'annually': 0.083,
   };
-  
+
   const monthlyIncome = incomeSources
     ?.filter(s => s.is_active)
     .reduce((sum, s) => sum + (Number(s.amount) * (frequencyMultiplier[s.frequency] || 1)), 0) || 0;
@@ -652,51 +652,55 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   const incomeChartData: IncomeChartData[] = [];
   const investmentChartData: InvestmentChartData[] = [];
   const monthlyData: MonthlyChartData[] = [];
-  
+
   for (let i = 5; i >= 0; i--) {
     const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
     const monthKey = d.toISOString().slice(0, 7);
     const monthLabel = d.toLocaleDateString('pt-BR', { month: 'short' });
 
-   const monthIncomeHistory = incomeHistory?.filter(h => h.date.startsWith(monthKey)) || [];
-    
-    // Agrupa por Ativa/Passiva
+    const monthIncomeHistory = incomeHistory?.filter(h => h.date.startsWith(monthKey)) || [];
+
+    // Agrupa por Ativa/Passiva/Alternativa
     let activeIncomeSum = 0;
     let passiveIncomeSum = 0;
+    let alternativeIncomeSum = 0;
 
     monthIncomeHistory.forEach(h => {
       const source = incomeSources?.find(s => s.id === h.income_source_id);
       if (source?.type === 'passive') {
         passiveIncomeSum += Number(h.amount);
+      } else if (source?.type === 'alternative') {
+        alternativeIncomeSum += Number(h.amount);
       } else {
         activeIncomeSum += Number(h.amount);
       }
     });
 
     // Se mês atual e sem histórico, usa projeção baseada nas fontes ativas
-    if (i === 0 && activeIncomeSum === 0 && passiveIncomeSum === 0) {
-       incomeSources?.filter(s => s.is_active).forEach(s => {
-          const val = Number(s.amount) * (frequencyMultiplier[s.frequency] || 1);
-          if (s.type === 'passive') passiveIncomeSum += val;
-          else activeIncomeSum += val;
-       });
+    if (i === 0 && activeIncomeSum === 0 && passiveIncomeSum === 0 && alternativeIncomeSum === 0) {
+      incomeSources?.filter(s => s.is_active).forEach(s => {
+        const val = Number(s.amount) * (frequencyMultiplier[s.frequency] || 1);
+        if (s.type === 'passive') passiveIncomeSum += val;
+        else if (s.type === 'alternative') alternativeIncomeSum += val;
+        else activeIncomeSum += val;
+      });
     }
 
-    const totalIncomeMonth = activeIncomeSum + passiveIncomeSum;
-    incomeChartData.push({ month: monthLabel, active: activeIncomeSum, passive: passiveIncomeSum });
+    const totalIncomeMonth = activeIncomeSum + passiveIncomeSum + alternativeIncomeSum;
+    incomeChartData.push({ month: monthLabel, active: activeIncomeSum, passive: passiveIncomeSum, alternative: alternativeIncomeSum });
 
     // 2. Despesas do mês
     // Extra
     const extraSum = extraExpenses
       ?.filter(e => e.expense_date.startsWith(monthKey))
       .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-    
+
     // Cartão (estimado)
     const cardSum = cardPurchases
       ?.filter(p => p.purchase_date.startsWith(monthKey))
       .reduce((sum, p) => {
         if (p.is_installment && p.total_installments) {
-          return sum + (Number(p.amount) / p.total_installments); 
+          return sum + (Number(p.amount) / p.total_installments);
         }
         return sum + Number(p.amount);
       }, 0) || 0;
@@ -717,7 +721,7 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
     // 3. Investimentos (Histórico de Custo)
     // Soma purchase_price * quantity de investimentos comprados ATÉ o fim deste mês
     const monthEndDate = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString();
-    
+
     const investedCostUntilNow = investments
       ?.filter(inv => inv.purchase_date <= monthEndDate)
       .reduce((sum, inv) => sum + (Number(inv.quantity) * Number(inv.purchase_price)), 0) || 0;
@@ -739,7 +743,7 @@ export async function getFinancialSummary(): Promise<FinancialSummary> {
   // --- CÁLCULO DE CATEGORIAS (PIE CHART) ---
   const categoryMap = new Map<string, number>();
   fixedExpenses?.forEach(e => {
-    if(e.is_active) {
+    if (e.is_active) {
       const cat = e.category || "Outros";
       categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(e.amount));
     }

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useIncomeSources, useFinancialSummary } from "@/hooks/use-finance-data";
 import { useCurrencyFormatter } from "@/hooks/use-currency-formatter";
+import { useLanguage } from "@/components/providers/language-provider";
 import { createIncomeSource, updateIncomeSource, deleteIncomeSource } from "@/lib/actions/finance-actions";
 import type { IncomeSource } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ const sourceIcons: Record<string, React.ReactNode> = {
 };
 
 function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -91,60 +93,61 @@ function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Income Source
+          {t("income.addIncome")}
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Adc Fonte de Renda</DialogTitle>
+          <DialogTitle className="text-foreground">{t("income.addIncomeDialog.title")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Main Salary" required className="bg-input border-border" />
+            <Label htmlFor="name">{t("income.addIncomeDialog.name")}</Label>
+            <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("income.addIncomeDialog.namePlaceholder")} required className="bg-input border-border" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Type</Label>
+              <Label>{t("income.addIncomeDialog.type")}</Label>
               <Select value={form.type} onValueChange={(value) => setForm({ ...form, type: value as IncomeSource["type"] })}>
                 <SelectTrigger className="bg-input border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="passive">Passive</SelectItem>
+                  <SelectItem value="active">{t("income.activeIncome")}</SelectItem>
+                  <SelectItem value="passive">{t("income.passiveIncome")}</SelectItem>
+                  <SelectItem value="alternative">{t("income.alternativeIncome")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Frequency</Label>
+              <Label>{t("income.addIncomeDialog.frequency")}</Label>
               <Select value={form.frequency} onValueChange={(value) => setForm({ ...form, frequency: value as IncomeSource["frequency"] })}>
                 <SelectTrigger className="bg-input border-border">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">Semanal</SelectItem>
-                  <SelectItem value="bi-weekly">Quinzenal</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                  <SelectItem value="quarterly">Trimestral</SelectItem>
-                  <SelectItem value="annually">Anual</SelectItem>
+                  <SelectItem value="weekly">{t("income.frequency.weekly")}</SelectItem>
+                  <SelectItem value="bi-weekly">{t("income.frequency.bi-weekly")}</SelectItem>
+                  <SelectItem value="monthly">{t("income.frequency.monthly")}</SelectItem>
+                  <SelectItem value="quarterly">{t("income.frequency.quarterly")}</SelectItem>
+                  <SelectItem value="annually">{t("income.frequency.annually")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Quantia</Label>
+              <Label htmlFor="amount">{t("income.addIncomeDialog.amount")}</Label>
               <Input id="amount" type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="5000" required className="bg-input border-border" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="source">Source</Label>
-              <Input id="source" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder="Company Name" required className="bg-input border-border" />
+              <Label htmlFor="source">{t("income.addIncomeDialog.source")}</Label>
+              <Input id="source" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder={t("income.addIncomeDialog.sourcePlaceholder")} required className="bg-input border-border" />
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Adc Fonte de Renda
+            {t("income.addIncomeDialog.save")}
           </Button>
         </form>
       </DialogContent>
@@ -155,11 +158,12 @@ function AddIncomeDialog({ onSuccess }: { onSuccess: () => void }) {
 export function IncomeView() {
   const { data: incomeSources, isLoading } = useIncomeSources();
   const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
+  const { t, language: lang } = useLanguage();
 
   const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-US", {
+    new Intl.NumberFormat(lang, {
       style: "currency",
-      currency: "USD",
+      currency: "BRL",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -174,7 +178,7 @@ export function IncomeView() {
 
   const incomeHistoryData = summary?.incomeChartData || [];
   const incomes = incomeSources || [];
-  
+
 
   const toggleIncome = async (income: IncomeSource) => {
     await updateIncomeSource(income.id, { is_active: !income.is_active });
@@ -206,9 +210,11 @@ export function IncomeView() {
 
   const activeIncome = incomes.filter(i => i.type === "active" && i.is_active);
   const passiveIncome = incomes.filter(i => i.type === "passive" && i.is_active);
+  const alternativeIncome = incomes.filter(i => i.type === "alternative" && i.is_active);
 
   const totalActive = activeIncome.reduce((sum, i) => sum + getMonthlyAmount(i), 0);
   const totalPassive = passiveIncome.reduce((sum, i) => sum + getMonthlyAmount(i), 0);
+  const totalAlternative = alternativeIncome.reduce((sum, i) => sum + getMonthlyAmount(i), 0);
 
   const passiveRatio = monthlyIncome > 0 ? ((totalPassive / monthlyIncome) * 100).toFixed(1) : "0";
   const annualProjection = monthlyIncome * 12;
@@ -216,45 +222,46 @@ export function IncomeView() {
   const incomeDistribution = [
     { name: "Active Income", value: totalActive, color: "#3b82f6" },
     { name: "Passive Income", value: totalPassive, color: "#10b981" },
+    { name: "Alternative Income", value: totalAlternative, color: "#f59e0b" },
   ].filter(item => item.value > 0);
 
   const getFrequencyLabel = (freq: string) => {
     switch (freq) {
-      case "weekly": return "Weekly";
-      case "bi-weekly": return "Bi-weekly";
-      case "monthly": return "Monthly";
-      case "quarterly": return "Quarterly";
-      case "annually": return "Annually";
+      case "weekly": return t("income.frequency.weekly");
+      case "bi-weekly": return t("income.frequency.bi-weekly");
+      case "monthly": return t("income.frequency.monthly");
+      case "quarterly": return t("income.frequency.quarterly");
+      case "annually": return t("income.frequency.annually");
       default: return freq;
     }
   };
 
   const projectionData = [];
   const today = new Date();
-  for(let i=1; i<=5; i++) {
-     const nextMonth = new Date(today.getFullYear(), today.getMonth() + i, 1);
-     projectionData.push({
-        month: nextMonth.toLocaleDateString('pt-BR', { month: 'short' }),
-        cumulative: monthlyIncome * i
-     });
+  for (let i = 1; i <= 5; i++) {
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + i, 1);
+    projectionData.push({
+      month: nextMonth.toLocaleDateString('pt-BR', { month: 'short' }),
+      cumulative: monthlyIncome * i
+    });
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Renda</h1>
+          <h1 className="text-2xl font-semibold text-foreground">{t("income.title")}</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Acompanhe seus fluxos de renda ativa e passiva.
+            {t("income.subtitle")}
           </p>
         </div>
-        <AddIncomeDialog onSuccess={() => {}} />
+        <AddIncomeDialog onSuccess={() => { }} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Renda Mensal</p>
+            <p className="text-sm text-muted-foreground">{t("income.monthlyIncome")}</p>
             <Wallet className="h-5 w-5 text-primary" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
@@ -263,53 +270,66 @@ export function IncomeView() {
           <div className="flex items-center gap-1 mt-2">
             <ArrowUpRight className="h-4 w-4 text-emerald-500" />
             <span className="text-sm font-medium text-emerald-500">+5.2%</span>
-            <span className="text-xs text-muted-foreground">vs Ultimo Mes</span>
+            <span className="text-xs text-muted-foreground">vs {lang === "en-US" ? "last month" : "mês anterior"}</span>
           </div>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Renda Ativa</p>
+            <p className="text-sm text-muted-foreground">{t("income.activeIncome")}</p>
             <Briefcase className="h-5 w-5 text-chart-2" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(totalActive)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {activeIncome.length} active source{activeIncome.length !== 1 ? "s" : ""}
+            {activeIncome.length} {lang === "en-US" ? (activeIncome.length !== 1 ? "active sources" : "active source") : (activeIncome.length !== 1 ? "fontes ativas" : "fonte ativa")}
           </p>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Renda Passiva</p>
+            <p className="text-sm text-muted-foreground">{t("income.passiveIncome")}</p>
             <PiggyBank className="h-5 w-5 text-emerald-500" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(totalPassive)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            {passiveRatio}% do total de renda
+            {passiveRatio}% {lang === "en-US" ? "of total income" : "do total de renda"}
           </p>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Projeção Anual</p>
+            <p className="text-sm text-muted-foreground">{t("income.alternativeIncome")}</p>
+            <Wallet className="h-5 w-5 text-orange-500" />
+          </div>
+          <p className="text-2xl font-semibold text-foreground mt-2">
+            {formatCurrency(totalAlternative)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {alternativeIncome.length} {lang === "en-US" ? "sources" : "fontes"}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-card border border-border p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">{t("income.annualProjection")}</p>
             <TrendingUp className="h-5 w-5 text-yellow-500" />
           </div>
           <p className="text-2xl font-semibold text-foreground mt-2">
             {formatCurrency(annualProjection)}
           </p>
           <p className="text-xs text-muted-foreground mt-2">
-            Com base nos fluxos atuais
+            {lang === "en-US" ? "Based on current flows" : "Com base nos fluxos atuais"}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Historico de Renda</h3>
+          <h3 className="font-medium text-card-foreground mb-4">{t("income.history")}</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={incomeHistoryData}>
@@ -336,14 +356,15 @@ export function IncomeView() {
                   formatter={(value: number) => formatCurrency(value)}
                 />
                 <Bar dataKey="active" name="Active" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="passive" name="Passive" stackId="a" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="passive" name="Passive" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="alternative" name="Alternative" stackId="a" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Renda Mista</h3>
+          <h3 className="font-medium text-card-foreground mb-4">{t("income.distribution")}</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -395,7 +416,7 @@ export function IncomeView() {
 
       {monthlyIncome > 0 && (
         <div className="rounded-xl bg-card border border-border p-5">
-          <h3 className="font-medium text-card-foreground mb-4">Prejeção em 5 Meses</h3>
+          <h3 className="font-medium text-card-foreground mb-4">{t("income.projectionTitle")}</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={projectionData}>
@@ -445,13 +466,13 @@ export function IncomeView() {
         <div className="rounded-xl bg-card border border-border overflow-hidden">
           <div className="p-5 border-b border-border flex items-center gap-2">
             <Briefcase className="h-5 w-5 text-chart-2" />
-            <h3 className="font-medium text-card-foreground">Renda Ativa</h3>
+            <h3 className="font-medium text-card-foreground">{t("income.activeIncomeSource")}</h3>
           </div>
           <div className="p-5 space-y-3">
             {incomes.filter(i => i.type === "active").length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">Sem Fontes de Renda Ativa</p>
+                <p className="text-sm">{t("income.noActiveIncome")}</p>
               </div>
             ) : (
               incomes.filter(i => i.type === "active").map((income) => (
@@ -484,7 +505,7 @@ export function IncomeView() {
                         {formatCurrency(Number(income.amount))}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        ~{formatCurrency(getMonthlyAmount(income))}/mo
+                        ~{formatCurrency(getMonthlyAmount(income))}/{lang === "en-US" ? "mo" : "mês"}
                       </p>
                     </div>
                     <button
@@ -508,13 +529,13 @@ export function IncomeView() {
         <div className="rounded-xl bg-card border border-border overflow-hidden">
           <div className="p-5 border-b border-border flex items-center gap-2">
             <PiggyBank className="h-5 w-5 text-emerald-500" />
-            <h3 className="font-medium text-card-foreground">Renda Passiva</h3>
+            <h3 className="font-medium text-card-foreground">{t("income.passiveIncomeSource")}</h3>
           </div>
           <div className="p-5 space-y-3">
             {incomes.filter(i => i.type === "passive").length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <PiggyBank className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">Sem Fontes de Renda Passiva</p>
+                <p className="text-sm">{t("income.noPassiveIncome")}</p>
               </div>
             ) : (
               incomes.filter(i => i.type === "passive").map((income) => (
@@ -547,7 +568,7 @@ export function IncomeView() {
                         {formatCurrency(Number(income.amount))}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        ~{formatCurrency(getMonthlyAmount(income))}/mes
+                        ~{formatCurrency(getMonthlyAmount(income))}/{lang === "en-US" ? "mo" : "mês"}
                       </p>
                     </div>
                     <button
@@ -566,6 +587,69 @@ export function IncomeView() {
               ))
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-card border border-border overflow-hidden">
+        <div className="p-5 border-b border-border flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-orange-500" />
+          <h3 className="font-medium text-card-foreground">{t("income.alternativeIncomeSource")}</h3>
+        </div>
+        <div className="p-5 space-y-3">
+          {incomes.filter(i => i.type === "alternative").length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Wallet className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">{t("income.noAlternativeIncome")}</p>
+            </div>
+          ) : (
+            incomes.filter(i => i.type === "alternative").map((income) => (
+              <div
+                key={income.id}
+                className={cn(
+                  "flex items-center justify-between p-4 rounded-lg border transition-all group",
+                  income.is_active
+                    ? "border-border bg-secondary/30"
+                    : "border-border/50 bg-secondary/10 opacity-60"
+                )}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                    {sourceIcons[income.source] || <Wallet className="h-4 w-4" />}
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">{income.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{income.source}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {getFrequencyLabel(income.frequency)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="font-semibold text-foreground">
+                      {formatCurrency(Number(income.amount))}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      ~{formatCurrency(getMonthlyAmount(income))}/{lang === "en-US" ? "mo" : "mês"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(income.id)}
+                    className="p-1.5 rounded text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/20"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <Switch
+                    checked={income.is_active}
+                    onCheckedChange={() => toggleIncome(income)}
+                  />
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

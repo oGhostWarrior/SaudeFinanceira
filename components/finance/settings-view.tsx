@@ -24,14 +24,17 @@ import {
 import { Loader2, Save, User, Globe, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import { useLanguage } from "@/components/providers/language-provider";
+import { Language } from "@/lib/translations";
 
 export function SettingsView() {
   const { data: profile, isLoading } = useProfile();
+  const { t, setLanguage } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     currency: "BRL",
-    language: "pt-BR",
+    language: "pt-BR" as Language,
   });
 
   useEffect(() => {
@@ -39,7 +42,7 @@ export function SettingsView() {
       setFormData({
         full_name: profile.full_name || "",
         currency: profile.currency || "BRL",
-        language: profile.language || "pt-BR",
+        language: (profile.language as Language) || "pt-BR",
       });
     }
   }, [profile]);
@@ -53,13 +56,14 @@ export function SettingsView() {
         currency: formData.currency,
         language: formData.language,
       });
-      
+
       await mutate("profile");
       await mutate("financial-summary");
-      
-      toast.success("Configurações salvas com sucesso!");
+
+      setLanguage(formData.language);
+      toast.success(t("settings.saveSuccess"));
     } catch (error) {
-      toast.error("Erro ao salvar configurações.");
+      toast.error(t("settings.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -76,33 +80,33 @@ export function SettingsView() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Configurações</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("settings.title")}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Gerencie suas preferências de conta e visualização
+          {t("settings.subtitle")}
         </p>
       </div>
 
       <form onSubmit={handleSave}>
         <Card>
           <CardHeader>
-            <CardTitle>Perfil & Preferências</CardTitle>
+            <CardTitle>{t("settings.cardTitle")}</CardTitle>
             <CardDescription>
-              Ajuste como você vê seus dados financeiros.
+              {t("settings.cardDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            
+
             {/* Nome */}
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                Nome Completo
+                {t("settings.fullName")}
               </Label>
               <Input
                 id="name"
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="Seu nome"
+                placeholder={t("settings.fullNamePlaceholder")}
               />
             </div>
 
@@ -110,14 +114,14 @@ export function SettingsView() {
             <div className="space-y-2">
               <Label htmlFor="currency" className="flex items-center gap-2">
                 <Wallet className="h-4 w-4 text-muted-foreground" />
-                Moeda Principal
+                {t("settings.currency")}
               </Label>
               <Select
                 value={formData.currency}
                 onValueChange={(value) => setFormData({ ...formData, currency: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a moeda" />
+                  <SelectValue placeholder={t("settings.currencyPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="BRL">Real Brasileiro (BRL)</SelectItem>
@@ -126,7 +130,7 @@ export function SettingsView() {
                 </SelectContent>
               </Select>
               <p className="text-[0.8rem] text-muted-foreground">
-                Isso afetará como os valores monetários são exibidos em todo o app.
+                {t("settings.currencyDesc")}
               </p>
             </div>
 
@@ -134,14 +138,14 @@ export function SettingsView() {
             <div className="space-y-2">
               <Label htmlFor="language" className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-muted-foreground" />
-                Idioma / Formato Regional
+                {t("settings.language")}
               </Label>
               <Select
                 value={formData.language}
-                onValueChange={(value) => setFormData({ ...formData, language: value })}
+                onValueChange={(value) => setFormData({ ...formData, language: value as Language })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o idioma" />
+                  <SelectValue placeholder={t("settings.languagePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
@@ -149,7 +153,7 @@ export function SettingsView() {
                 </SelectContent>
               </Select>
               <p className="text-[0.8rem] text-muted-foreground">
-                Define o formato de datas (DD/MM/AAAA) e números.
+                {t("settings.languageDesc")}
               </p>
             </div>
 
@@ -157,7 +161,7 @@ export function SettingsView() {
           <CardFooter className="flex justify-end border-t border-border pt-6">
             <Button type="submit" disabled={isSaving}>
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salvar Alterações
+              {t("settings.saveButton")}
             </Button>
           </CardFooter>
         </Card>
