@@ -187,6 +187,12 @@ export const ptBR = {
             gifts: "Presentes",
             health: "Saúde",
             maintenance: "Manutenção",
+            taxes: "Impostos",
+            transportation: "Transporte",
+            food: "Alimentação",
+            entertainment: "Entretenimento",
+            health_care: "Plano de Saúde",
+            education: "Educação",
             other: "Outros",
         },
         addFixedDialog: {

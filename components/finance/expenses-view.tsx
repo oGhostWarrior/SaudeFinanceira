@@ -20,6 +20,12 @@ import {
   Lightbulb,
   Shield,
   Tv,
+  Ham,
+  HandCoins,
+  ShieldPlus,
+  Car,
+  Youtube,
+  PencilLine,
   MoreHorizontal,
   Calendar,
   DollarSign,
@@ -48,7 +54,13 @@ const categoryConfig: Record<string, { icon: React.ReactNode; color: string }> =
   rent: { icon: <Home className="h-4 w-4" />, color: "#3b82f6" },
   utilities: { icon: <Lightbulb className="h-4 w-4" />, color: "#10b981" },
   insurance: { icon: <Shield className="h-4 w-4" />, color: "#f59e0b" },
-  subscriptions: { icon: <Tv className="h-4 w-4" />, color: "#8b5cf6" },
+  subscriptions: { icon: <Tv className="h-4 w-4" />, color: "#00e1ffff" },
+  taxes: { icon: <HandCoins className="h-4 w-4" />, color: "#870debff" },
+  transportation: { icon: <Car className="h-4 w-4" />, color: "#f1ee19ff" },
+  food: { icon: <Ham className="h-4 w-4" />, color: "#b35c167c" },
+  entertainment: { icon: <Youtube className="h-4 w-4" />, color: "#f51b0bff" },
+  health_care: { icon: <ShieldPlus className="h-4 w-4" />, color: "#34d469ff" },
+  education: { icon: <PencilLine className="h-4 w-4" />, color: "#0b63c7ff" },
   other: { icon: <MoreHorizontal className="h-4 w-4" />, color: "#6b7280" },
 };
 
@@ -132,6 +144,12 @@ function AddFixedExpenseDialog({ onSuccess }: { onSuccess: () => void }) {
                 <SelectItem value="utilities">{t("expenses.categories.utilities")}</SelectItem>
                 <SelectItem value="insurance">{t("expenses.categories.insurance")}</SelectItem>
                 <SelectItem value="subscriptions">{t("expenses.categories.subscriptions")}</SelectItem>
+                <SelectItem value="taxes">{t("expenses.categories.taxes")}</SelectItem>
+                <SelectItem value="transportation">{t("expenses.categories.transportation")}</SelectItem>
+                <SelectItem value="food">{t("expenses.categories.food")}</SelectItem>
+                <SelectItem value="entertainment">{t("expenses.categories.entertainment")}</SelectItem>
+                <SelectItem value="health_care">{t("expenses.categories.health_care")}</SelectItem>
+                <SelectItem value="education">{t("expenses.categories.education")}</SelectItem>
                 <SelectItem value="other">{t("expenses.categories.other")}</SelectItem>
               </SelectContent>
             </Select>
@@ -238,7 +256,7 @@ export function ExpensesView() {
   // Hooks de dados
   const { data: fixedExpenses, isLoading: fixedLoading } = useFixedExpenses();
   const { data: extraExpenses, isLoading: extraLoading } = useExtraExpenses();
-  const { data: summary, isLoading: summaryLoading } = useFinancialSummary(); // Novo hook
+  const { data: summary, isLoading: summaryLoading } = useFinancialSummary();
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat(lang, {

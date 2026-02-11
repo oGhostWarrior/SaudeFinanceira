@@ -187,6 +187,12 @@ export const enUS = {
             gifts: "Gifts",
             health: "Healthcare",
             maintenance: "Maintenance",
+            taxes: "Taxes",
+            transportation: "Transportation",
+            food: "Food",
+            entertainment: "Entertainment",
+            health_care: "Health Plan",
+            education: "Education",
             other: "Other",
         },
         addFixedDialog: {

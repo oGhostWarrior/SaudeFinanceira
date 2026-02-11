@@ -42,7 +42,7 @@ export interface FixedExpense {
   user_id: string;
   name: string;
   amount: number;
-  category: 'utilities' | 'insurance' | 'subscriptions' | 'rent' | 'other';
+  category: 'utilities' | 'insurance' | 'subscriptions' | 'rent' | 'taxes' | 'transportation' | 'food' | 'entertainment' | 'health_care' | 'education' | 'other';
   due_day: number;
   is_active: boolean;
   created_at: string;
